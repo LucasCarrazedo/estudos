@@ -1,0 +1,2324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAEP em 5 Dias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: barra lateral com a grade do curso + uma aula por vez na área principal */
+:root{
+  --bg:#f4f5f2; --surface:#ffffff; --ink:#16201c; --muted:#5c6a63; --line:#dfe3dc;
+  --accent:#0f7a5c; --accent-soft:#e0f1ea; --mark:#c2410c; --code-bg:#14201b; --code-ink:#d9e6df;
+  --ok:#15803d; --bad:#b91c1c;
+  --d1:#d9480f; --d2:#1971c2; --d3:#c99700; --d4:#7048e8; --d5:#0f7a5c;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101614; --surface:#18201d; --ink:#e4ebe7; --muted:#97a69f; --line:#2b3632;
+    --accent:#3fc59a; --accent-soft:#1c3a30; --mark:#fb923c; --code-bg:#0b100e; --code-ink:#d9e6df;
+    --ok:#4ade80; --bad:#f87171; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101614; --surface:#18201d; --ink:#e4ebe7; --muted:#97a69f; --line:#2b3632;
+  --accent:#3fc59a; --accent-soft:#1c3a30; --mark:#fb923c; --code-bg:#0b100e; --code-ink:#d9e6df;
+  --ok:#4ade80; --bad:#f87171; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--body)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:300px 1fr;min-height:100%}
+.lateral{background:var(--surface);border-right:1px solid var(--line);padding:22px 18px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.marca{font-family:var(--display);font-weight:800;font-size:24px;line-height:1.1;margin:0}
+.marca small{display:block;font:500 13px var(--body);color:var(--muted);margin-top:4px}
+.progresso{margin:18px 0 6px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.progresso div{height:100%;background:var(--accent);width:0;transition:width .3s}
+.progresso-txt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.modulo{margin-top:18px}
+.modulo h3{font:600 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.modulo h3 i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.modulo ol{list-style:none;margin:0;padding:0}
+.modulo a{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:14px;line-height:1.4}
+.modulo a:hover{background:var(--bg)}
+.modulo a.atual{background:var(--accent-soft);font-weight:600}
+.modulo a .chk{flex:none;width:16px;height:16px;border:1.5px solid var(--line);border-radius:50%;margin-top:1px;display:grid;place-items:center;font-size:10px;color:#fff}
+.modulo a.feita .chk{background:var(--ok);border-color:var(--ok)}
+.modulo a.feita .chk::after{content:"✓"}
+.abrir-menu{display:none}
+
+main{padding:36px 48px 80px;min-width:0}
+.aula{display:none;max-width:none}
+.aula.ativa{display:block}
+.rotulo{font:600 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rotulo b{color:#fff;padding:2px 8px;border-radius:4px}
+.aula h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,40px);line-height:1.1;margin:10px 0 18px;text-wrap:balance}
+.aula h2{font-family:var(--display);font-weight:600;font-size:22px;margin:34px 0 8px;text-wrap:balance}
+.aula h3{font-size:17px;margin:24px 0 6px}
+.aula p,.aula li{max-width:none}
+.aula code{font:0.88em var(--mono);background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.objetivo{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);padding:12px 16px;border-radius:6px}
+.objetivo strong{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.atencao{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--mark);padding:12px 16px;border-radius:6px;margin:18px 0}
+.atencao strong:first-child{color:var(--mark)}
+
+.bloco{margin:16px 0;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.bloco-topo{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg);color:#93a59c;font:12px var(--mono);padding:6px 8px 6px 14px;border-bottom:1px solid #26332d}
+.bloco-topo .acoes{display:flex;gap:6px}
+.bloco-topo button{font:600 12px var(--body);background:#26332d;color:#e4ebe7;border:0;border-radius:4px;padding:5px 10px;cursor:pointer}
+.bloco-topo button:hover{background:#34453d}
+.bloco-topo button.rodar{background:var(--accent);color:#fff}
+.bloco pre{margin:0;background:var(--code-bg);color:var(--code-ink);padding:14px;overflow-x:auto;font:13.5px/1.6 var(--mono);tab-size:2}
+.bloco pre,.aula code{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.bloco pre code{background:none;padding:0;font:inherit;color:inherit;border-radius:0}
+.bloco pre .c{color:#7f938a;font-style:italic}
+.bloco iframe{display:block;width:100%;height:240px;border:0;background:#fff;border-top:3px solid var(--accent)}
+
+table.tab{border-collapse:collapse;width:100%;font-size:14.5px;margin:14px 0;background:var(--surface)}
+.tab-wrap{overflow-x:auto}
+table.tab th,table.tab td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.tab th{background:var(--accent-soft)}
+table.tab td code{white-space:nowrap}
+
+details.gabarito{margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+details.gabarito summary{cursor:pointer;padding:10px 14px;font-weight:600}
+details.gabarito > div{padding:0 14px 6px}
+.exercicio{background:var(--surface);border:1px dashed var(--accent);border-radius:8px;padding:14px 18px;margin:18px 0}
+.exercicio > strong{color:var(--accent)}
+
+.quiz .pergunta{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:14px 0}
+.quiz .pergunta p{margin:0 0 10px;font-weight:600}
+.quiz .ops{display:grid;gap:6px}
+.quiz button.op{text-align:left;font:15px var(--body);background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer}
+.quiz button.op:hover{border-color:var(--accent)}
+.quiz button.op.certa{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.quiz button.op.errada{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
+.quiz .fb{margin-top:8px;font-size:14px;color:var(--muted);min-height:1em}
+.placar{font-weight:600;font-variant-numeric:tabular-nums}
+
+.dias{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:18px 0}
+.dia{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;border-top:4px solid var(--c)}
+.dia b{font-family:var(--display);font-size:18px;display:block}
+.dia span{font-size:13px;color:var(--muted)}
+.dia ul{margin:8px 0 0;padding-left:18px;font-size:14px}
+
+.rodape-aula{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:44px;padding-top:18px;border-top:1px solid var(--line)}
+.btn{font:600 15px var(--body);border-radius:6px;padding:10px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none}
+.btn.prim{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.feito{background:var(--ok);border-color:var(--ok);color:#fff}
+.der{max-width:100%;height:auto;display:block;margin:14px 0}
+.der rect{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.der .cab{fill:var(--accent)}
+.der text{fill:var(--ink);font:13px var(--mono)}
+.der text.t{fill:#fff;font-weight:600}
+.der line,.der path{stroke:var(--ink);stroke-width:1.5;fill:none}
+
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .lateral{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .lateral nav{display:none}
+  .lateral.aberta nav{display:block}
+  .abrir-menu{display:inline-block;margin-top:12px}
+  main{padding:24px 16px 60px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="lateral" id="lateral">
+  <p class="marca">SAEP em 5 Dias<small>HTML · CSS · JavaScript · SQL</small></p>
+  <div class="progresso" aria-hidden="true"><div id="barra"></div></div>
+  <div class="progresso-txt" id="progressoTxt">0 de 0 aulas concluídas</div>
+  <button class="btn abrir-menu" id="abrirMenu" aria-expanded="false">Ver todas as aulas</button>
+  <nav id="menu"></nav>
+</aside>
+
+<main id="principal">
+
+<!-- ================= COMECE AQUI ================= -->
+<section class="aula" id="inicio" data-mod="Comece aqui" data-cor="var(--accent)" data-titulo="Como funciona o curso" data-min="10">
+<h1>Do zero a um sistema de 3 telas em 5 dias</h1>
+<p>Este curso foi montado para a prova prática do SAEP de Desenvolvimento de Sistemas. Cada dia tem aulas curtas, exemplos que você roda aqui mesmo, um exercício com gabarito e um quiz. No dia 5 você monta o projeto completo: um <strong>Sistema de Controle de Estoque</strong> com banco de dados, tela de login, painel com a lista de produtos e tela de cadastro com validação.</p>
+
+<div class="dias">
+  <div class="dia" style="--c:var(--d1)"><b>Dia 1 · HTML</b><span>cerca de 2h30</span><ul><li>Estrutura da página</li><li>Tabelas e semântica</li><li>Formulários</li></ul></div>
+  <div class="dia" style="--c:var(--d2)"><b>Dia 2 · CSS</b><span>cerca de 2h30</span><ul><li>Seletores e cores</li><li>Box model</li><li>Flexbox, Grid e celular</li></ul></div>
+  <div class="dia" style="--c:var(--d3)"><b>Dia 3 · JavaScript</b><span>cerca de 3h</span><ul><li>Lógica e funções</li><li>Arrays e objetos</li><li>DOM, eventos e validação</li></ul></div>
+  <div class="dia" style="--c:var(--d4)"><b>Dia 4 · SQL</b><span>cerca de 3h</span><ul><li>Tabelas, PK e FK</li><li>CRUD e JOIN</li><li>MySQL x PostgreSQL</li></ul></div>
+  <div class="dia" style="--c:var(--d5)"><b>Dia 5 · Projeto</b><span>cerca de 4h</span><ul><li>Banco + 3 telas</li><li>Checklist de entrega</li><li>Simulado cronometrado</li></ul></div>
+</div>
+
+<h2>O que a prova costuma cobrar</h2>
+<p>A prova prática segue quase sempre o mesmo roteiro: você recebe um enunciado com um problema (estoque, biblioteca, oficina, escola) e precisa entregar:</p>
+<ol>
+  <li><strong>O banco de dados</strong>: o script SQL criando as tabelas com chave primária e estrangeira, e alguns dados de exemplo. Às vezes pedem também o desenho do DER.</li>
+  <li><strong>Tela de login</strong> com validação (campo vazio, usuário errado).</li>
+  <li><strong>Tela principal</strong> que mostra os dados cadastrados, com busca e opção de sair.</li>
+  <li><strong>Tela de cadastro</strong> com validação dos campos, para incluir e editar registros.</li>
+</ol>
+<div class="atencao"><strong>Confirme com seu professor.</strong> O formato exato muda de escola para escola e de ano para ano (linguagem permitida, se o site precisa estar ligado ao banco de verdade, tempo de prova). O projeto do Dia 5 funciona só com HTML, CSS e JS e tem um anexo mostrando como ligar no MySQL se for exigido.</div>
+
+<h2>O que instalar antes de começar</h2>
+<ul>
+  <li><strong>VS Code</strong> com a extensão <strong>Live Server</strong> (botão direito no HTML, "Open with Live Server").</li>
+  <li><strong>Um navegador</strong> (Chrome ou Edge). Aperte <code>F12</code> para abrir o console e ver erros do JavaScript.</li>
+  <li><strong>MySQL Workbench</strong> (MySQL) e/ou <strong>pgAdmin</strong> (PostgreSQL), conforme o que sua escola usa.</li>
+</ul>
+
+<h2>Como estudar</h2>
+<p>Faça uma aula, rode os exemplos (botão <strong>Executar</strong>), mude alguma coisa e rode de novo. Só abra o gabarito depois de tentar o exercício. No fim de cada aula, marque como concluída: o progresso fica salvo neste navegador.</p>
+</section>
+
+<!-- ================= DIA 1 · HTML ================= -->
+<section class="aula" id="d1-estrutura" data-mod="Dia 1 · HTML" data-cor="var(--d1)" data-titulo="Estrutura de uma página" data-min="40">
+<p class="objetivo"><strong>Objetivo</strong>Entender o esqueleto de qualquer página HTML e as tags de texto, link e imagem.</p>
+<p>HTML é a linguagem que diz <em>o que</em> existe na página: um título, um parágrafo, um botão. Cada coisa é uma <strong>tag</strong>, que normalmente abre e fecha: <code>&lt;p&gt;texto&lt;/p&gt;</code>. Tags podem ter <strong>atributos</strong>, que dão informações extras: <code>&lt;a href="painel.html"&gt;</code>.</p>
+
+<h2>O esqueleto</h2>
+<p>Toda página começa igual. No VS Code, digite <code>!</code> e aperte Tab que ele gera isto pronto:</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<!DOCTYPE html>               <!-- avisa que é HTML5 -->
+<html lang="pt-BR">
+<head>                         <!-- configurações: não aparece na tela -->
+  <meta charset="UTF-8">       <!-- acentos funcionando -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha página</title>  <!-- nome na aba do navegador -->
+  <link rel="stylesheet" href="css/style.css">   <!-- liga o CSS -->
+</head>
+<body>                         <!-- tudo que aparece na tela -->
+  <h1>Olá, SAEP!</h1>
+  <p>Meu primeiro parágrafo.</p>
+
+  <script src="js/app.js"><\/script>   <!-- JS no fim do body -->
+</body>
+</html>
+</script>
+
+<h2>Tags de texto, link e imagem</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<h1>Título principal (só um por página)</h1>
+<h2>Subtítulo</h2>
+<p>Parágrafo com <strong>negrito</strong> e <em>itálico</em>.</p>
+<p>Quebra de linha<br>dentro do parágrafo.</p>
+<hr>
+<a href="https://www.senai.br">Link para outro site</a><br>
+<a href="painel.html">Link para outra página do projeto</a><br>
+<img src="logo.png" alt="Logo da empresa" width="120">
+</script>
+<ul>
+  <li><code>h1</code> até <code>h6</code>: títulos, do maior para o menor.</li>
+  <li><code>a</code>: link. O atributo <code>href</code> diz para onde vai.</li>
+  <li><code>img</code>: imagem. Não fecha. <code>alt</code> é o texto alternativo (acessibilidade, e a prova costuma olhar isso).</li>
+  <li><code>br</code> e <code>hr</code> também não fecham.</li>
+</ul>
+<div class="atencao"><strong>Caminhos de arquivo.</strong> <code>href="css/style.css"</code> procura a pasta <code>css</code> ao lado do HTML. Erro de caminho é a causa número 1 de "meu CSS não funciona".</div>
+</section>
+
+<section class="aula" id="d1-tabelas" data-mod="Dia 1 · HTML" data-titulo="Semântica, listas e tabelas" data-min="35">
+<p class="objetivo"><strong>Objetivo</strong>Organizar a página em áreas com significado e mostrar dados em tabela, como o painel do projeto.</p>
+<h2>Tags semânticas</h2>
+<p>São "caixas" com nome. Funcionam como <code>div</code>, mas dizem o que é cada parte. Use-as: a correção valoriza código organizado.</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<header>Cabeçalho: logo e menu</header>
+<nav>
+  <a href="painel.html">Painel</a> |
+  <a href="produto.html">Novo produto</a>
+</nav>
+<main>
+  <section>
+    <h2>Produtos</h2>
+    <p>Conteúdo principal da página.</p>
+  </section>
+</main>
+<footer>Rodapé © 2026</footer>
+</script>
+
+<h2>Listas</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<ul>  <!-- lista sem número -->
+  <li>Arroz</li>
+  <li>Feijão</li>
+</ul>
+<ol>  <!-- lista numerada -->
+  <li>Criar o banco</li>
+  <li>Fazer as telas</li>
+</ol>
+</script>
+
+<h2>Tabelas</h2>
+<p>A tela de listagem quase sempre é uma tabela. Memorize a hierarquia: <code>table</code> &gt; <code>thead</code>/<code>tbody</code> &gt; <code>tr</code> (linha) &gt; <code>th</code> (célula de título) ou <code>td</code> (célula comum).</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<table border="1">
+  <thead>
+    <tr>
+      <th>Nome</th>
+      <th>Quantidade</th>
+      <th>Preço</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Martelo</td>
+      <td>25</td>
+      <td>R$ 39,90</td>
+    </tr>
+    <tr>
+      <td>Disjuntor 20A</td>
+      <td>2</td>
+      <td>R$ 27,80</td>
+    </tr>
+  </tbody>
+</table>
+</script>
+<p>No projeto, o <code>&lt;tbody&gt;</code> começa vazio e o JavaScript preenche as linhas com os dados.</p>
+</section>
+
+<section class="aula" id="d1-formularios" data-mod="Dia 1 · HTML" data-titulo="Formulários" data-min="45">
+<p class="objetivo"><strong>Objetivo</strong>Montar formulários corretos: é a base da tela de login e da tela de cadastro.</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<form id="formCadastro">
+  <label for="nome">Nome</label><br>
+  <input type="text" id="nome" placeholder="Nome do produto" required><br><br>
+
+  <label for="email">E-mail</label><br>
+  <input type="email" id="email"><br><br>
+
+  <label for="senha">Senha</label><br>
+  <input type="password" id="senha" minlength="6"><br><br>
+
+  <label for="qtd">Quantidade</label><br>
+  <input type="number" id="qtd" min="0"><br><br>
+
+  <label for="data">Data</label><br>
+  <input type="date" id="data"><br><br>
+
+  <label for="cat">Categoria</label><br>
+  <select id="cat">
+    <option value="">Selecione...</option>
+    <option value="1">Ferramentas</option>
+    <option value="2">Elétrica</option>
+  </select><br><br>
+
+  <label for="obs">Observação</label><br>
+  <textarea id="obs" rows="3"></textarea><br><br>
+
+  <label><input type="checkbox" id="ativo"> Ativo</label><br><br>
+
+  <button type="submit">Salvar</button>
+  <button type="reset">Limpar</button>
+</form>
+</script>
+
+<h2>Regras que você precisa saber</h2>
+<ul>
+  <li><strong><code>label for</code> = <code>id</code> do campo.</strong> Clicar no texto foca o campo. Esquecer isso é erro comum.</li>
+  <li><strong><code>type</code></strong> muda o teclado e a validação: <code>email</code>, <code>password</code> (esconde), <code>number</code>, <code>date</code>.</li>
+  <li><strong><code>required</code>, <code>min</code>, <code>maxlength</code>, <code>minlength</code></strong>: validação automática do navegador.</li>
+  <li><strong><code>id</code></strong> é como o JavaScript encontra o campo. Tem que ser único na página.</li>
+  <li><strong><code>button type="submit"</code></strong> envia o formulário. Dentro de um <code>form</code>, todo botão é submit se você não disser outra coisa.</li>
+</ul>
+
+<div class="exercicio"><strong>Exercício do Dia 1</strong>
+<p>Crie <code>index.html</code> com uma tela de login: título "Estoque", um parágrafo de instrução, campo de e-mail, campo de senha (ambos com label) e um botão "Entrar". Use <code>main</code> e <code>form</code>. Não precisa de CSS ainda.</p>
+</div>
+<details class="gabarito"><summary>Ver gabarito</summary><div>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | Estoque</title>
+</head>
+<body>
+  <main>
+    <form id="formLogin">
+      <h1>Estoque</h1>
+      <p>Entre com seu usuário para continuar</p>
+
+      <label for="email">E-mail</label><br>
+      <input type="email" id="email" placeholder="seu@email.com"><br><br>
+
+      <label for="senha">Senha</label><br>
+      <input type="password" id="senha"><br><br>
+
+      <button type="submit">Entrar</button>
+    </form>
+  </main>
+</body>
+</html>
+</script>
+</div></details>
+</section>
+
+<section class="aula" id="d1-quiz" data-mod="Dia 1 · HTML" data-titulo="Quiz do Dia 1" data-min="10">
+<h1>Quiz do Dia 1</h1>
+<div class="quiz">
+  <div class="pergunta" data-certa="2" data-explica="O label se liga ao campo pelo id: for=&quot;email&quot; aponta para id=&quot;email&quot;."><p>1. Como ligar um label ao seu input?</p><div class="ops"><button class="op">&lt;label name="email"&gt;</button><button class="op">&lt;label id="email"&gt;</button><button class="op">&lt;label for="email"&gt; com o input id="email"</button></div></div>
+  <div class="pergunta" data-certa="1" data-explica="O head guarda configurações (charset, title, link do CSS). O que aparece fica no body."><p>2. Onde fica a tag &lt;link&gt; que liga o CSS?</p><div class="ops"><button class="op">No body</button><button class="op">No head</button><button class="op">Depois do &lt;/html&gt;</button></div></div>
+  <div class="pergunta" data-certa="0" data-explica="tr é a linha; th e td são as células dentro dela."><p>3. Em uma tabela, qual tag representa uma linha?</p><div class="ops"><button class="op">&lt;tr&gt;</button><button class="op">&lt;td&gt;</button><button class="op">&lt;th&gt;</button></div></div>
+  <div class="pergunta" data-certa="2" data-explica="type=&quot;password&quot; esconde o que é digitado."><p>4. Qual input esconde o que o usuário digita?</p><div class="ops"><button class="op">type="hidden"</button><button class="op">type="secret"</button><button class="op">type="password"</button></div></div>
+  <div class="pergunta" data-certa="1" data-explica="O alt descreve a imagem para leitores de tela e aparece se a imagem não carregar."><p>5. Para que serve o atributo alt da imagem?</p><div class="ops"><button class="op">Definir a altura</button><button class="op">Texto alternativo da imagem</button><button class="op">Alinhar a imagem</button></div></div>
+  <p class="placar"></p>
+</div>
+</section>
+
+<!-- ================= DIA 2 · CSS ================= -->
+<section class="aula" id="d2-seletores" data-mod="Dia 2 · CSS" data-cor="var(--d2)" data-titulo="Seletores, cores e fontes" data-min="40">
+<p class="objetivo"><strong>Objetivo</strong>Saber ligar o CSS e escolher qual elemento estilizar.</p>
+<p>CSS diz <em>como</em> as coisas aparecem. Uma regra tem um <strong>seletor</strong> (quem) e <strong>declarações</strong> (o quê): <code>p { color: blue; }</code>. Use um arquivo separado, <code>css/style.css</code>, ligado no head.</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<style>
+  /* variáveis: mude uma vez, muda no site todo */
+  :root { --primaria: #1d4ed8; }
+
+  body  { font-family: Arial, sans-serif; background: #f1f5f9; }   /* tag */
+  .card { background: white; padding: 12px; border-radius: 8px; } /* classe */
+  #titulo { color: var(--primaria); }                               /* id */
+  .card p { color: #475569; }      /* p que está DENTRO de .card */
+  a:hover { color: red; }          /* quando passa o mouse */
+  input:focus { outline: 2px solid var(--primaria); }  /* campo ativo */
+</style>
+
+<h1 id="titulo">Painel</h1>
+<div class="card">
+  <p>Texto dentro do card</p>
+  <a href="#">Passe o mouse</a>
+  <input placeholder="Clique aqui">
+</div>
+</script>
+
+<table class="tab"><tr><th>Seletor</th><th>Exemplo</th><th>Pega</th></tr>
+<tr><td>Tag</td><td><code>p</code></td><td>todos os parágrafos</td></tr>
+<tr><td>Classe</td><td><code>.btn</code></td><td>todos com <code>class="btn"</code> (pode repetir)</td></tr>
+<tr><td>Id</td><td><code>#titulo</code></td><td>o único com <code>id="titulo"</code></td></tr>
+<tr><td>Descendente</td><td><code>.card p</code></td><td>p dentro de .card</td></tr>
+<tr><td>Estado</td><td><code>:hover</code>, <code>:focus</code></td><td>mouse em cima, campo ativo</td></tr>
+</table>
+<p><strong>Quem ganha quando duas regras brigam?</strong> Id vence classe, classe vence tag. Empatou? Vale a que vem por último no arquivo.</p>
+<h3>Unidades e cores</h3>
+<p><code>px</code> (fixo), <code>%</code> (relativo ao pai), <code>rem</code> (relativo à fonte do site). Cores: nome (<code>red</code>), hexadecimal (<code>#1d4ed8</code>) ou <code>rgb(29, 78, 216)</code>.</p>
+</section>
+
+<section class="aula" id="d2-box" data-mod="Dia 2 · CSS" data-titulo="Box model" data-min="30">
+<p class="objetivo"><strong>Objetivo</strong>Controlar tamanho e espaçamento de qualquer elemento.</p>
+<p>Todo elemento é uma caixa com 4 camadas, de dentro para fora: <strong>conteúdo → padding</strong> (espaço interno) <strong>→ border → margin</strong> (espaço externo).</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<style>
+  * { box-sizing: border-box; }  /* width passa a incluir padding e borda */
+  .caixa {
+    width: 260px;
+    padding: 20px;               /* dentro */
+    border: 3px solid #1d4ed8;
+    margin: 20px auto;           /* fora; auto nos lados = centraliza */
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    background: white;
+  }
+  .btn {
+    display: inline-block;
+    padding: 10px 18px;
+    background: #1d4ed8;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+</style>
+<div class="caixa">
+  Uma caixa centralizada
+  <br><br>
+  <button class="btn">Botão estilizado</button>
+</div>
+</script>
+<ul>
+  <li><code>display: block</code> ocupa a linha inteira (div, p, h1). <code>inline</code> fica no meio do texto (a, span, strong) e ignora width/height.</li>
+  <li><code>margin: 10px 20px</code> = 10 em cima/embaixo, 20 nos lados. Com 4 valores: cima, direita, baixo, esquerda (sentido do relógio).</li>
+  <li>Comece todo CSS com <code>* { box-sizing: border-box; }</code>. Evita contas erradas de largura.</li>
+</ul>
+</section>
+
+<section class="aula" id="d2-layout" data-mod="Dia 2 · CSS" data-titulo="Flexbox, Grid e celular" data-min="50">
+<p class="objetivo"><strong>Objetivo</strong>Posicionar elementos lado a lado, centralizar a tela de login e adaptar ao celular.</p>
+<h2>Flexbox: uma direção (linha ou coluna)</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<style>
+  .topo {
+    display: flex;
+    justify-content: space-between; /* espalha no eixo principal */
+    align-items: center;            /* alinha no outro eixo */
+    gap: 12px;
+    background: #1d4ed8; color: white; padding: 12px 20px;
+  }
+  .centro {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 140px;                  /* login usa min-height: 100vh */
+    background: #e2e8f0;
+  }
+</style>
+<header class="topo"><strong>Sistema</strong><span>Olá, Admin | Sair</span></header>
+<div class="centro"><div style="background:white;padding:20px">Caixa de login centralizada</div></div>
+</script>
+<table class="tab"><tr><th>Propriedade</th><th>Valores mais usados</th></tr>
+<tr><td><code>flex-direction</code></td><td><code>row</code> (padrão), <code>column</code></td></tr>
+<tr><td><code>justify-content</code></td><td><code>center</code>, <code>space-between</code>, <code>flex-start</code>, <code>flex-end</code></td></tr>
+<tr><td><code>align-items</code></td><td><code>center</code>, <code>stretch</code>, <code>flex-start</code></td></tr>
+<tr><td><code>gap</code></td><td>espaço entre os filhos</td></tr>
+<tr><td><code>flex-wrap</code></td><td><code>wrap</code> deixa quebrar linha</td></tr>
+</table>
+
+<h2>Grid: linhas e colunas</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<style>
+  .resumo {
+    display: grid;
+    /* quantas colunas couberem, cada uma com no mínimo 140px */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .cartao { background: #f1f5f9; padding: 14px; border-radius: 8px; }
+  .cartao strong { display: block; font-size: 26px; }
+</style>
+<div class="resumo">
+  <div class="cartao">Produtos<strong>6</strong></div>
+  <div class="cartao">Itens<strong>138</strong></div>
+  <div class="cartao">Estoque baixo<strong>3</strong></div>
+</div>
+</script>
+
+<h2>Celular: media query</h2>
+<script type="text/plain" class="codigo" data-lang="css">
+/* Só vale quando a tela tiver até 600px */
+@media (max-width: 600px) {
+  .linha { grid-template-columns: 1fr; }   /* 2 colunas viram 1 */
+  .topo  { flex-direction: column; }
+}
+</script>
+<p>Para isso funcionar no celular, o HTML precisa da tag <code>&lt;meta name="viewport" ...&gt;</code> no head.</p>
+
+<div class="exercicio"><strong>Exercício do Dia 2</strong>
+<p>Pegue a tela de login do Dia 1 e crie <code>css/style.css</code> para: fundo cinza claro, caixa branca de no máximo 380px centralizada na tela (vertical e horizontal), campos com 100% de largura, botão azul ocupando a largura toda.</p>
+</div>
+<details class="gabarito"><summary>Ver gabarito</summary><div>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f1f5f9; }
+  main {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  form {
+    background: white; width: 100%; max-width: 380px;
+    padding: 32px; border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  }
+  h1 { color: #1d4ed8; }
+  p  { color: #64748b; margin: 4px 0 20px; }
+  label { font-weight: bold; font-size: 14px; }
+  input {
+    width: 100%; padding: 10px; margin: 6px 0 16px;
+    border: 1px solid #e2e8f0; border-radius: 6px;
+  }
+  button {
+    width: 100%; padding: 12px; border: none; border-radius: 6px;
+    background: #1d4ed8; color: white; font-size: 15px; cursor: pointer;
+  }
+  button:hover { background: #1e3a8a; }
+</style>
+<main>
+  <form>
+    <h1>Estoque</h1>
+    <p>Entre com seu usuário para continuar</p>
+    <label for="email">E-mail</label>
+    <input type="email" id="email">
+    <label for="senha">Senha</label>
+    <input type="password" id="senha">
+    <button type="submit">Entrar</button>
+  </form>
+</main>
+</script>
+</div></details>
+</section>
+
+<section class="aula" id="d2-quiz" data-mod="Dia 2 · CSS" data-titulo="Quiz do Dia 2" data-min="10">
+<h1>Quiz do Dia 2</h1>
+<div class="quiz">
+  <div class="pergunta" data-certa="1" data-explica="Ponto = classe, cerquilha = id."><p>1. Qual seletor pega todos os elementos com class="btn"?</p><div class="ops"><button class="op">#btn</button><button class="op">.btn</button><button class="op">btn</button></div></div>
+  <div class="pergunta" data-certa="0" data-explica="Padding é o espaço interno, entre o conteúdo e a borda."><p>2. Qual propriedade cria espaço DENTRO da borda?</p><div class="ops"><button class="op">padding</button><button class="op">margin</button><button class="op">gap</button></div></div>
+  <div class="pergunta" data-certa="2" data-explica="Com display:flex no pai, justify-content e align-items em center centralizam nos dois eixos."><p>3. Como centralizar um filho na horizontal e na vertical?</p><div class="ops"><button class="op">text-align: center</button><button class="op">margin: center</button><button class="op">display: flex; justify-content: center; align-items: center</button></div></div>
+  <div class="pergunta" data-certa="1" data-explica="Id é mais específico que classe, então vence, não importa a ordem."><p>4. Um elemento tem .titulo { color: red } e #principal { color: blue }. Qual cor aparece?</p><div class="ops"><button class="op">Vermelho</button><button class="op">Azul</button><button class="op">Depende do navegador</button></div></div>
+  <div class="pergunta" data-certa="0" data-explica="@media (max-width: 600px) aplica as regras só em telas de até 600px."><p>5. O que deixa o layout diferente no celular?</p><div class="ops"><button class="op">@media (max-width: 600px)</button><button class="op">@mobile</button><button class="op">display: phone</button></div></div>
+  <p class="placar"></p>
+</div>
+</section>
+
+<!-- ================= DIA 3 · JAVASCRIPT ================= -->
+<section class="aula" id="d3-logica" data-mod="Dia 3 · JavaScript" data-cor="var(--d3)" data-titulo="Variáveis, condições e funções" data-min="45">
+<p class="objetivo"><strong>Objetivo</strong>Escrever a lógica básica: guardar valores, decidir e reaproveitar código.</p>
+<p>JavaScript é o que dá <em>comportamento</em>: validar, mostrar mensagens, trocar de página. Nos exemplos abaixo, o <code>console.log</code> aparece no quadro branco quando você clica em Executar (no navegador ele vai para o console, tecla F12).</p>
+<script type="text/plain" class="codigo" data-lang="js" data-run>
+// const = não muda | let = pode mudar | evite var
+const nome = "Martelo";
+let quantidade = 3;
+const preco = 39.9;
+const ativo = true;
+
+quantidade = quantidade + 10;      // ou quantidade += 10
+console.log(nome, quantidade);
+
+// Template string: crase e ${ }
+console.log(`Produto: ${nome} custa R$ ${preco}`);
+
+// Tipos
+console.log(typeof nome, typeof quantidade, typeof ativo);
+
+// Texto que veio de um input é STRING. Converta antes de fazer conta:
+console.log("10" + 5);           // "105" (juntou texto)
+console.log(Number("10") + 5);   // 15
+</script>
+
+<h2>Condições</h2>
+<script type="text/plain" class="codigo" data-lang="js" data-run>
+const estoque = 3;
+const minimo = 5;
+
+if (estoque === 0) {
+  console.log("Sem estoque");
+} else if (estoque < minimo) {
+  console.log("Estoque baixo");
+} else {
+  console.log("Estoque ok");
+}
+
+// Operadores: === igual | !== diferente | > < >= <=
+//             && E | || OU | ! NÃO
+const email = "admin@estoque.com";
+const senha = "123456";
+if (email === "admin@estoque.com" && senha === "123456") {
+  console.log("Login liberado");
+}
+</script>
+<div class="atencao"><strong>Use sempre <code>===</code>.</strong> O <code>==</code> converte tipos e dá surpresas: <code>"5" == 5</code> é <code>true</code>, <code>"5" === 5</code> é <code>false</code>.</div>
+
+<h2>Funções</h2>
+<script type="text/plain" class="codigo" data-lang="js" data-run>
+// Função tradicional
+function calcularTotal(quantidade, preco) {
+  return quantidade * preco;
+}
+
+// Arrow function (mesma coisa, mais curta)
+const estaBaixo = (qtd, minimo) => qtd < minimo;
+
+console.log(calcularTotal(3, 12.5));   // 37.5
+console.log(estaBaixo(3, 5));          // true
+
+// Laço for: repete
+for (let i = 1; i <= 3; i++) {
+  console.log("Volta", i);
+}
+</script>
+</section>
+
+<section class="aula" id="d3-arrays" data-mod="Dia 3 · JavaScript" data-titulo="Arrays e objetos" data-min="40">
+<p class="objetivo"><strong>Objetivo</strong>Guardar uma lista de produtos e filtrar, buscar e somar, como no painel do projeto.</p>
+<p>Um <strong>objeto</strong> é como uma linha do banco (chave: valor). Um <strong>array</strong> é a tabela inteira (lista de objetos).</p>
+<script type="text/plain" class="codigo" data-lang="js" data-run>
+const produtos = [
+  { id: 1, nome: "Martelo", quantidade: 25, minimo: 5 },
+  { id: 2, nome: "Chave de fenda", quantidade: 3, minimo: 5 },
+  { id: 3, nome: "Disjuntor", quantidade: 2, minimo: 4 }
+];
+
+console.log(produtos.length);          // 3
+console.log(produtos[0].nome);         // Martelo (começa no 0)
+
+produtos.push({ id: 4, nome: "Trena", quantidade: 8, minimo: 3 });  // INSERT
+
+// forEach: percorre
+produtos.forEach(p => console.log(p.nome));
+
+// filter: devolve os que passam no teste (WHERE)
+const baixos = produtos.filter(p => p.quantidade < p.minimo);
+console.log("Baixos:", baixos.length);
+
+// find: devolve o primeiro que achar (WHERE id = 2)
+console.log(produtos.find(p => p.id === 2));
+
+// map: transforma cada item
+console.log(produtos.map(p => p.nome.toUpperCase()));
+
+// reduce: soma tudo (SUM)
+const total = produtos.reduce((soma, p) => soma + p.quantidade, 0);
+console.log("Total de itens:", total);
+
+// Busca por texto (LIKE '%cha%')
+console.log(produtos.filter(p => p.nome.toLowerCase().includes("cha")));
+</script>
+
+<h2>JSON</h2>
+<p>O <code>localStorage</code> só guarda texto. Para salvar um array, transforme em texto com <code>JSON.stringify</code>; para ler de volta, <code>JSON.parse</code>.</p>
+<script type="text/plain" class="codigo" data-lang="js" data-run>
+const lista = [{ nome: "Martelo" }, { nome: "Trena" }];
+const texto = JSON.stringify(lista);
+console.log(texto);                  // texto
+const deVolta = JSON.parse(texto);
+console.log(deVolta[1].nome);        // Trena
+</script>
+</section>
+
+<section class="aula" id="d3-dom" data-mod="Dia 3 · JavaScript" data-titulo="DOM e eventos" data-min="50">
+<p class="objetivo"><strong>Objetivo</strong>Ler campos, reagir a cliques e criar elementos na tela.</p>
+<p>O <strong>DOM</strong> é o HTML visto pelo JavaScript. O roteiro é sempre: <strong>pegar o elemento → ouvir um evento → mudar algo</strong>.</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<input id="campoNome" placeholder="Digite um produto">
+<button id="btnAdd">Adicionar</button>
+<p id="aviso"></p>
+<ul id="lista"></ul>
+
+<script>
+  // 1. Pegar elementos
+  const campo = document.getElementById("campoNome");
+  const botao = document.querySelector("#btnAdd");   // aceita seletor CSS
+  const aviso = document.getElementById("aviso");
+  const lista = document.getElementById("lista");
+
+  // 2. Ouvir o evento
+  botao.addEventListener("click", function () {
+    const nome = campo.value.trim();     // .value lê o que foi digitado
+
+    // 3. Mudar a tela
+    if (nome === "") {
+      aviso.textContent = "Digite um nome!";
+      aviso.style.color = "red";
+      return;
+    }
+    const item = document.createElement("li");
+    item.textContent = nome;
+    lista.appendChild(item);
+    aviso.textContent = "";
+    campo.value = "";                    // limpa o campo
+    campo.focus();
+  });
+<\/script>
+</script>
+
+<table class="tab"><tr><th>Preciso...</th><th>Uso</th></tr>
+<tr><td>Pegar um elemento</td><td><code>document.getElementById("id")</code> ou <code>document.querySelector(".classe")</code></td></tr>
+<tr><td>Pegar vários</td><td><code>document.querySelectorAll(".erro")</code></td></tr>
+<tr><td>Ler/escrever um campo</td><td><code>campo.value</code></td></tr>
+<tr><td>Trocar texto</td><td><code>el.textContent = "..."</code></td></tr>
+<tr><td>Trocar HTML</td><td><code>el.innerHTML = "&lt;tr&gt;...&lt;/tr&gt;"</code></td></tr>
+<tr><td>Classe CSS</td><td><code>el.classList.add("ok")</code> / <code>remove</code> / <code>toggle</code></td></tr>
+<tr><td>Criar e inserir</td><td><code>document.createElement("tr")</code> + <code>pai.appendChild(filho)</code></td></tr>
+<tr><td>Eventos comuns</td><td><code>click</code>, <code>submit</code> (formulário), <code>input</code> (a cada tecla), <code>change</code> (select)</td></tr>
+</table>
+
+<h2>Evento de formulário</h2>
+<p>No <code>submit</code>, chame <code>evento.preventDefault()</code>. Sem isso a página recarrega e tudo some.</p>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<form id="form">
+  <input id="qtd" type="number" placeholder="Quantidade">
+  <button type="submit">Salvar</button>
+</form>
+<p id="saida"></p>
+<script>
+  document.getElementById("form").addEventListener("submit", function (evento) {
+    evento.preventDefault();
+    const qtd = Number(document.getElementById("qtd").value);
+    document.getElementById("saida").textContent =
+      qtd > 0 ? `Salvo: ${qtd} unidades` : "Quantidade inválida";
+  });
+<\/script>
+</script>
+</section>
+
+<section class="aula" id="d3-validacao" data-mod="Dia 3 · JavaScript" data-titulo="Validação, localStorage e navegação" data-min="45">
+<p class="objetivo"><strong>Objetivo</strong>Validar um formulário de verdade, guardar dados no navegador e trocar de tela.</p>
+<h2>Validação com mensagem embaixo do campo</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-run>
+<style> .erro { color: #dc2626; font-size: 13px; display: block; } </style>
+<form id="formLogin" novalidate>
+  <input id="email" placeholder="E-mail"><span class="erro" id="erroEmail"></span><br>
+  <input id="senha" type="password" placeholder="Senha"><span class="erro" id="erroSenha"></span><br>
+  <button type="submit">Entrar</button>
+  <p id="resultado"></p>
+</form>
+<script>
+  document.getElementById("formLogin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value.trim();
+
+    // limpa erros antigos
+    document.getElementById("erroEmail").textContent = "";
+    document.getElementById("erroSenha").textContent = "";
+
+    let valido = true;
+    if (email === "") {
+      document.getElementById("erroEmail").textContent = "Informe o e-mail.";
+      valido = false;
+    } else if (!email.includes("@")) {
+      document.getElementById("erroEmail").textContent = "E-mail inválido.";
+      valido = false;
+    }
+    if (senha.length < 6) {
+      document.getElementById("erroSenha").textContent = "Mínimo de 6 caracteres.";
+      valido = false;
+    }
+    if (!valido) return;   // para aqui se tiver erro
+
+    document.getElementById("resultado").textContent = "Tudo certo! (aqui iria para o painel)";
+  });
+<\/script>
+</script>
+<p><code>novalidate</code> no form desliga os balões automáticos do navegador para você mostrar as suas mensagens. Se o tempo apertar na prova, <code>required</code> sozinho já é uma validação aceitável.</p>
+
+<h2>localStorage e sessionStorage</h2>
+<p>Guardam texto no navegador. <code>localStorage</code> fica para sempre; <code>sessionStorage</code> some ao fechar a aba (bom para "usuário logado"). Este exemplo não roda aqui dentro do curso, só no seu computador:</p>
+<script type="text/plain" class="codigo" data-lang="js">
+// Salvar
+localStorage.setItem("produtos", JSON.stringify(listaDeProdutos));
+sessionStorage.setItem("usuarioLogado", "Administrador");
+
+// Ler (vem null se não existir)
+const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+const usuario = sessionStorage.getItem("usuarioLogado");
+
+// Apagar
+sessionStorage.removeItem("usuarioLogado");
+</script>
+
+<h2>Trocar de tela e mandar dados pela URL</h2>
+<script type="text/plain" class="codigo" data-lang="js">
+// Ir para outra página
+window.location.href = "painel.html";
+
+// Proteger uma página: sem login, volta para o login
+if (!sessionStorage.getItem("usuarioLogado")) {
+  window.location.href = "index.html";
+}
+
+// Link de edição:  <a href="produto.html?id=3">Editar</a>
+// Na página produto.html, ler o id:
+const parametros = new URLSearchParams(window.location.search);
+const id = Number(parametros.get("id"));   // 3 (ou 0 se não tiver)
+
+// Perguntar antes de apagar
+if (confirm("Deseja mesmo excluir?")) { /* apaga */ }
+</script>
+
+<div class="exercicio"><strong>Exercício do Dia 3</strong>
+<p>Faça a tela de login funcionar: ao enviar, valide os campos com mensagem embaixo de cada um. Se o e-mail for <code>admin@estoque.com</code> e a senha <code>123456</code>, salve o nome no <code>sessionStorage</code> e vá para <code>painel.html</code>. Senão, mostre "E-mail ou senha incorretos". No <code>painel.html</code>, mostre "Olá, Administrador" e expulse quem não está logado.</p>
+</div>
+<details class="gabarito"><summary>Ver gabarito</summary><div>
+<script type="text/plain" class="codigo" data-lang="js" data-arquivo="js/login.js">
+document.getElementById("formLogin").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+  document.getElementById("erroEmail").textContent = "";
+  document.getElementById("erroSenha").textContent = "";
+  document.getElementById("erroLogin").textContent = "";
+
+  let valido = true;
+  if (email === "") { document.getElementById("erroEmail").textContent = "Informe o e-mail."; valido = false; }
+  if (senha === "") { document.getElementById("erroSenha").textContent = "Informe a senha."; valido = false; }
+  if (!valido) return;
+
+  if (email === "admin@estoque.com" && senha === "123456") {
+    sessionStorage.setItem("usuarioLogado", "Administrador");
+    window.location.href = "painel.html";
+  } else {
+    document.getElementById("erroLogin").textContent = "E-mail ou senha incorretos.";
+  }
+});
+</script>
+<script type="text/plain" class="codigo" data-lang="js" data-arquivo="js/painel.js">
+const usuario = sessionStorage.getItem("usuarioLogado");
+if (!usuario) {
+  window.location.href = "index.html";
+}
+document.getElementById("nomeUsuario").textContent = usuario;
+</script>
+</div></details>
+</section>
+
+<section class="aula" id="d3-quiz" data-mod="Dia 3 · JavaScript" data-titulo="Quiz do Dia 3" data-min="10">
+<h1>Quiz do Dia 3</h1>
+<div class="quiz">
+  <div class="pergunta" data-certa="2" data-explica="Valor de input é sempre texto: &quot;10&quot; + 5 junta os dois. Use Number() antes da conta."><p>1. O usuário digitou 10 num input. Quanto dá campo.value + 5?</p><div class="ops"><button class="op">15</button><button class="op">Erro</button><button class="op">"105"</button></div></div>
+  <div class="pergunta" data-certa="0" data-explica="Sem preventDefault o formulário é enviado e a página recarrega."><p>2. O que impede o formulário de recarregar a página?</p><div class="ops"><button class="op">evento.preventDefault()</button><button class="op">return true</button><button class="op">form.stop()</button></div></div>
+  <div class="pergunta" data-certa="1" data-explica="filter devolve um novo array só com os itens que passam no teste."><p>3. Qual método devolve só os produtos com estoque baixo?</p><div class="ops"><button class="op">find</button><button class="op">filter</button><button class="op">forEach</button></div></div>
+  <div class="pergunta" data-certa="2" data-explica="localStorage só aceita texto, por isso usamos JSON.stringify para salvar e JSON.parse para ler."><p>4. Como salvar um array no localStorage?</p><div class="ops"><button class="op">localStorage.setItem("p", lista)</button><button class="op">localStorage.save(lista)</button><button class="op">localStorage.setItem("p", JSON.stringify(lista))</button></div></div>
+  <div class="pergunta" data-certa="0" data-explica="window.location.href recebe o endereço da nova página."><p>5. Como ir para painel.html pelo JavaScript?</p><div class="ops"><button class="op">window.location.href = "painel.html"</button><button class="op">goto("painel.html")</button><button class="op">document.open("painel.html")</button></div></div>
+  <p class="placar"></p>
+</div>
+</section>
+
+<!-- ================= DIA 4 · SQL ================= -->
+<section class="aula" id="d4-conceitos" data-mod="Dia 4 · SQL" data-cor="var(--d4)" data-titulo="Tabelas, chaves e DER" data-min="35">
+<p class="objetivo"><strong>Objetivo</strong>Entender como os dados se organizam antes de escrever SQL.</p>
+<ul>
+  <li><strong>Banco de dados</strong>: o conjunto (ex.: <code>estoque</code>).</li>
+  <li><strong>Tabela</strong>: um assunto (usuario, categoria, produto). <strong>Coluna</strong> = campo; <strong>linha</strong> = registro.</li>
+  <li><strong>Chave primária (PK)</strong>: identifica cada linha, não repete, não fica vazia. Normalmente <code>id</code>.</li>
+  <li><strong>Chave estrangeira (FK)</strong>: coluna que aponta para a PK de outra tabela. É ela que cria o relacionamento.</li>
+</ul>
+<h2>DER do projeto</h2>
+<p>Uma categoria tem vários produtos; cada produto tem uma categoria. Isso é um relacionamento <strong>1 para N</strong> (1:N). A FK fica sempre do lado N.</p>
+<svg class="der" viewBox="0 0 640 215" role="img" aria-label="DER: categoria 1 para N produto; usuario separado">
+  <g><rect x="10" y="20" width="180" height="90" rx="4"/><rect class="cab" x="10" y="20" width="180" height="26" rx="4"/><text class="t" x="22" y="38">usuario</text>
+  <text x="22" y="64">PK id</text><text x="22" y="82">nome, email</text><text x="22" y="100">senha</text></g>
+  <g><rect x="10" y="130" width="180" height="72" rx="4"/><rect class="cab" x="10" y="130" width="180" height="26" rx="4"/><text class="t" x="22" y="148">categoria</text>
+  <text x="22" y="174">PK id</text><text x="22" y="188">nome</text></g>
+  <g><rect x="380" y="60" width="240" height="140" rx="4"/><rect class="cab" x="380" y="60" width="240" height="26" rx="4"/><text class="t" x="392" y="78">produto</text>
+  <text x="392" y="104">PK id</text><text x="392" y="122">nome</text><text x="392" y="140">FK categoria_id</text><text x="392" y="158">quantidade, estoque_minimo</text><text x="392" y="176">preco, criado_em</text></g>
+  <path d="M190 161 H290 V136 H380"/><text x="198" y="155">1</text><text x="362" y="130">N</text>
+  <line x1="372" y1="128" x2="380" y2="136"/><line x1="372" y1="144" x2="380" y2="136"/>
+</svg>
+<h2>Tipos de dados mais usados</h2>
+<div class="tab-wrap"><table class="tab"><tr><th>Para guardar</th><th>MySQL</th><th>PostgreSQL</th></tr>
+<tr><td>Número inteiro</td><td><code>INT</code></td><td><code>INT</code> / <code>INTEGER</code></td></tr>
+<tr><td>Id automático</td><td><code>INT AUTO_INCREMENT</code></td><td><code>SERIAL</code></td></tr>
+<tr><td>Texto curto</td><td><code>VARCHAR(100)</code></td><td><code>VARCHAR(100)</code></td></tr>
+<tr><td>Texto longo</td><td><code>TEXT</code></td><td><code>TEXT</code></td></tr>
+<tr><td>Dinheiro</td><td><code>DECIMAL(10,2)</code></td><td><code>NUMERIC(10,2)</code> (DECIMAL também funciona)</td></tr>
+<tr><td>Data / data e hora</td><td><code>DATE</code> / <code>DATETIME</code></td><td><code>DATE</code> / <code>TIMESTAMP</code></td></tr>
+<tr><td>Verdadeiro/falso</td><td><code>BOOLEAN</code> (vira TINYINT 0/1)</td><td><code>BOOLEAN</code> (true/false)</td></tr>
+</table></div>
+<p><code>DECIMAL(10,2)</code> = até 10 dígitos no total, 2 depois da vírgula. Nunca use <code>FLOAT</code> para dinheiro.</p>
+</section>
+
+<section class="aula" id="d4-ddl" data-mod="Dia 4 · SQL" data-titulo="Criando o banco e as tabelas" data-min="40">
+<p class="objetivo"><strong>Objetivo</strong>Escrever o script que cria o banco (DDL: CREATE, ALTER, DROP).</p>
+<script type="text/plain" class="codigo" data-lang="sql" data-arquivo="MySQL">
+CREATE DATABASE escola;
+USE escola;                        -- entra no banco
+
+CREATE TABLE turma (
+    id    INT AUTO_INCREMENT PRIMARY KEY,
+    nome  VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE aluno (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    nome       VARCHAR(100) NOT NULL,          -- obrigatório
+    email      VARCHAR(100) UNIQUE,            -- não repete
+    nota       DECIMAL(4,2) DEFAULT 0,         -- valor padrão
+    turma_id   INT NOT NULL,
+    FOREIGN KEY (turma_id) REFERENCES turma(id)
+);
+</script>
+<script type="text/plain" class="codigo" data-lang="sql" data-arquivo="PostgreSQL">
+CREATE DATABASE escola;
+-- não existe USE: no psql digite  \c escola  | no pgAdmin abra o Query Tool no banco escola
+
+CREATE TABLE turma (
+    id    SERIAL PRIMARY KEY,
+    nome  VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE aluno (
+    id         SERIAL PRIMARY KEY,
+    nome       VARCHAR(100) NOT NULL,
+    email      VARCHAR(100) UNIQUE,
+    nota       NUMERIC(4,2) DEFAULT 0,
+    turma_id   INT NOT NULL REFERENCES turma(id)
+);
+</script>
+<h2>Restrições (constraints)</h2>
+<ul>
+  <li><code>PRIMARY KEY</code>: identifica a linha.</li>
+  <li><code>NOT NULL</code>: campo obrigatório.</li>
+  <li><code>UNIQUE</code>: não deixa repetir (ótimo para e-mail e CPF).</li>
+  <li><code>DEFAULT</code>: valor usado quando o INSERT não informa.</li>
+  <li><code>FOREIGN KEY ... REFERENCES</code>: só aceita um valor que exista na outra tabela.</li>
+</ul>
+<div class="atencao"><strong>Ordem importa.</strong> Crie primeiro a tabela que é referenciada (turma) e depois a que tem a FK (aluno). Para apagar, o contrário.</div>
+<h2>Alterar e apagar estrutura</h2>
+<script type="text/plain" class="codigo" data-lang="sql">
+ALTER TABLE aluno ADD telefone VARCHAR(20);    -- nova coluna
+ALTER TABLE aluno DROP COLUMN telefone;        -- remove coluna
+DROP TABLE IF EXISTS aluno;                    -- apaga a tabela inteira
+DROP DATABASE IF EXISTS escola;                -- apaga o banco
+</script>
+</section>
+
+<section class="aula" id="d4-crud" data-mod="Dia 4 · SQL" data-titulo="CRUD: INSERT, SELECT, UPDATE, DELETE" data-min="45">
+<p class="objetivo"><strong>Objetivo</strong>Inserir, consultar, alterar e excluir dados (DML). Isto é igual no MySQL e no PostgreSQL.</p>
+<h2>INSERT: Create</h2>
+<script type="text/plain" class="codigo" data-lang="sql">
+INSERT INTO turma (nome) VALUES ('1º DS'), ('2º DS');
+
+INSERT INTO aluno (nome, email, nota, turma_id) VALUES
+('Ana Souza',   'ana@escola.com',   8.5, 1),
+('Bruno Lima',  'bruno@escola.com', 6.0, 1),
+('Carla Dias',  'carla@escola.com', 9.2, 2);
+-- o id não é informado: o banco gera sozinho
+-- texto e data vão entre aspas SIMPLES
+</script>
+<h2>SELECT: Read</h2>
+<script type="text/plain" class="codigo" data-lang="sql">
+SELECT * FROM aluno;                               -- tudo
+SELECT nome, nota FROM aluno;                      -- só algumas colunas
+SELECT * FROM aluno WHERE nota >= 7;               -- filtro
+SELECT * FROM aluno WHERE nota >= 7 AND turma_id = 1;
+SELECT * FROM aluno WHERE nome LIKE 'A%';          -- começa com A
+SELECT * FROM aluno WHERE nome LIKE '%Lima%';      -- contém Lima
+SELECT * FROM aluno WHERE nota BETWEEN 6 AND 8;    -- entre (inclui 6 e 8)
+SELECT * FROM aluno WHERE turma_id IN (1, 2);      -- está na lista
+SELECT * FROM aluno WHERE email IS NULL;           -- vazio (nunca use = NULL)
+SELECT * FROM aluno ORDER BY nota DESC;            -- maior para menor
+SELECT * FROM aluno ORDER BY nome LIMIT 2;         -- só os 2 primeiros
+SELECT nome AS aluno, nota * 10 AS nota_100 FROM aluno;   -- apelido
+</script>
+<h2>UPDATE e DELETE</h2>
+<script type="text/plain" class="codigo" data-lang="sql">
+UPDATE aluno SET nota = 7.5 WHERE id = 2;
+UPDATE aluno SET nota = nota + 0.5, turma_id = 2 WHERE id = 1;
+
+DELETE FROM aluno WHERE id = 3;
+</script>
+<div class="atencao"><strong>UPDATE e DELETE sem WHERE alteram a tabela inteira.</strong> Escreva o WHERE primeiro, sempre. (O MySQL Workbench até bloqueia isso por padrão, com o "safe update mode".)</div>
+<p>Excluir uma turma que ainda tem alunos dá erro de FK. Apague (ou mude) os alunos primeiro.</p>
+</section>
+
+<section class="aula" id="d4-join" data-mod="Dia 4 · SQL" data-titulo="JOIN e funções de agregação" data-min="40">
+<p class="objetivo"><strong>Objetivo</strong>Juntar tabelas e gerar resumos (contagem, soma, média).</p>
+<h2>JOIN</h2>
+<script type="text/plain" class="codigo" data-lang="sql">
+-- INNER JOIN: só o que tem par nas duas tabelas
+SELECT a.nome, t.nome AS turma
+FROM aluno a
+INNER JOIN turma t ON t.id = a.turma_id;
+
+-- LEFT JOIN: tudo da tabela da esquerda, mesmo sem par
+-- (mostra turmas sem nenhum aluno)
+SELECT t.nome AS turma, a.nome AS aluno
+FROM turma t
+LEFT JOIN aluno a ON a.turma_id = t.id;
+</script>
+<p>O <code>ON</code> liga a FK com a PK. As letras <code>a</code> e <code>t</code> são apelidos das tabelas para escrever menos.</p>
+<h2>Agregação</h2>
+<script type="text/plain" class="codigo" data-lang="sql">
+SELECT COUNT(*) FROM aluno;          -- quantos alunos
+SELECT AVG(nota) FROM aluno;         -- média
+SELECT MAX(nota), MIN(nota) FROM aluno;
+SELECT SUM(nota) FROM aluno;
+
+-- GROUP BY: um resultado por grupo
+SELECT t.nome AS turma, COUNT(a.id) AS alunos, AVG(a.nota) AS media
+FROM turma t
+LEFT JOIN aluno a ON a.turma_id = t.id
+GROUP BY t.nome;
+
+-- HAVING: filtro DEPOIS de agrupar (WHERE é antes)
+SELECT turma_id, AVG(nota) AS media
+FROM aluno
+GROUP BY turma_id
+HAVING AVG(nota) >= 7;
+</script>
+<p>Ordem de escrita de um SELECT completo: <code>SELECT → FROM → JOIN → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT</code>.</p>
+</section>
+
+<section class="aula" id="d4-diferencas" data-mod="Dia 4 · SQL" data-titulo="MySQL x PostgreSQL" data-min="20">
+<p class="objetivo"><strong>Objetivo</strong>Saber exatamente o que muda entre os dois, para não travar na prova.</p>
+<p>90% do SQL é igual. O que muda está aqui:</p>
+<div class="tab-wrap"><table class="tab">
+<tr><th>Situação</th><th>MySQL</th><th>PostgreSQL</th></tr>
+<tr><td>Id automático</td><td><code>INT AUTO_INCREMENT PRIMARY KEY</code></td><td><code>SERIAL PRIMARY KEY</code></td></tr>
+<tr><td>Entrar no banco</td><td><code>USE estoque;</code></td><td><code>\c estoque</code> (psql) ou escolher no pgAdmin</td></tr>
+<tr><td>Dinheiro</td><td><code>DECIMAL(10,2)</code></td><td><code>NUMERIC(10,2)</code> (DECIMAL também)</td></tr>
+<tr><td>Data e hora</td><td><code>DATETIME</code></td><td><code>TIMESTAMP</code></td></tr>
+<tr><td>Busca sem diferenciar maiúscula</td><td><code>LIKE</code> (já ignora, na configuração padrão)</td><td><code>ILIKE</code> (o LIKE diferencia)</td></tr>
+<tr><td>Nome com espaço/palavra reservada</td><td><code>`nome`</code> (crase)</td><td><code>"nome"</code> (aspas duplas)</td></tr>
+<tr><td>Agora</td><td><code>NOW()</code></td><td><code>NOW()</code></td></tr>
+<tr><td>Ver tabelas</td><td><code>SHOW TABLES;</code></td><td><code>\dt</code> (psql)</td></tr>
+<tr><td>Ver estrutura</td><td><code>DESCRIBE produto;</code></td><td><code>\d produto</code> (psql)</td></tr>
+<tr><td>Ferramenta visual</td><td>MySQL Workbench</td><td>pgAdmin</td></tr>
+<tr><td>Porta padrão</td><td>3306</td><td>5432</td></tr>
+</table></div>
+<p>Texto sempre entre <strong>aspas simples</strong> nos dois: <code>WHERE nome = 'Ana'</code>. No PostgreSQL, aspas duplas são para nome de coluna, então <code>"Ana"</code> dá erro.</p>
+
+<div class="exercicio"><strong>Exercício do Dia 4</strong>
+<p>Crie o banco <code>biblioteca</code> com as tabelas <code>autor</code> (id, nome) e <code>livro</code> (id, titulo, ano, autor_id FK). Insira 2 autores e 3 livros. Depois escreva: (a) livros com o nome do autor, do mais novo para o mais antigo; (b) quantos livros cada autor tem; (c) altere o ano do livro 1 para 2020; (d) exclua o livro 3. Faça no banco que sua escola usa.</p>
+</div>
+<details class="gabarito"><summary>Ver gabarito (MySQL)</summary><div>
+<script type="text/plain" class="codigo" data-lang="sql" data-arquivo="MySQL">
+CREATE DATABASE biblioteca;
+USE biblioteca;
+
+CREATE TABLE autor (
+    id   INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+CREATE TABLE livro (
+    id       INT AUTO_INCREMENT PRIMARY KEY,
+    titulo   VARCHAR(150) NOT NULL,
+    ano      INT,
+    autor_id INT NOT NULL,
+    FOREIGN KEY (autor_id) REFERENCES autor(id)
+);
+
+INSERT INTO autor (nome) VALUES ('Machado de Assis'), ('Clarice Lispector');
+INSERT INTO livro (titulo, ano, autor_id) VALUES
+('Dom Casmurro', 1899, 1),
+('Memórias Póstumas de Brás Cubas', 1881, 1),
+('A Hora da Estrela', 1977, 2);
+
+-- (a)
+SELECT l.titulo, l.ano, a.nome AS autor
+FROM livro l
+INNER JOIN autor a ON a.id = l.autor_id
+ORDER BY l.ano DESC;
+-- (b)
+SELECT a.nome, COUNT(l.id) AS total_livros
+FROM autor a
+LEFT JOIN livro l ON l.autor_id = a.id
+GROUP BY a.nome;
+-- (c)
+UPDATE livro SET ano = 2020 WHERE id = 1;
+-- (d)
+DELETE FROM livro WHERE id = 3;
+</script>
+</div></details>
+<details class="gabarito"><summary>Ver gabarito (PostgreSQL)</summary><div>
+<script type="text/plain" class="codigo" data-lang="sql" data-arquivo="PostgreSQL">
+CREATE DATABASE biblioteca;
+-- conecte no banco:  \c biblioteca
+
+CREATE TABLE autor (
+    id   SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+CREATE TABLE livro (
+    id       SERIAL PRIMARY KEY,
+    titulo   VARCHAR(150) NOT NULL,
+    ano      INT,
+    autor_id INT NOT NULL REFERENCES autor(id)
+);
+
+INSERT INTO autor (nome) VALUES ('Machado de Assis'), ('Clarice Lispector');
+INSERT INTO livro (titulo, ano, autor_id) VALUES
+('Dom Casmurro', 1899, 1),
+('Memórias Póstumas de Brás Cubas', 1881, 1),
+('A Hora da Estrela', 1977, 2);
+
+SELECT l.titulo, l.ano, a.nome AS autor
+FROM livro l
+INNER JOIN autor a ON a.id = l.autor_id
+ORDER BY l.ano DESC;
+
+SELECT a.nome, COUNT(l.id) AS total_livros
+FROM autor a
+LEFT JOIN livro l ON l.autor_id = a.id
+GROUP BY a.nome;
+
+UPDATE livro SET ano = 2020 WHERE id = 1;
+DELETE FROM livro WHERE id = 3;
+</script>
+</div></details>
+</section>
+
+<section class="aula" id="d4-quiz" data-mod="Dia 4 · SQL" data-titulo="Quiz do Dia 4" data-min="10">
+<h1>Quiz do Dia 4</h1>
+<div class="quiz">
+  <div class="pergunta" data-certa="1" data-explica="Num 1:N a FK fica no lado N. Cada produto guarda o id da sua categoria."><p>1. Categoria (1) tem vários Produtos (N). Onde fica a chave estrangeira?</p><div class="ops"><button class="op">Na tabela categoria</button><button class="op">Na tabela produto</button><button class="op">Numa terceira tabela</button></div></div>
+  <div class="pergunta" data-certa="2" data-explica="No PostgreSQL o id automático é SERIAL (ou GENERATED ALWAYS AS IDENTITY)."><p>2. No PostgreSQL, o que substitui o AUTO_INCREMENT?</p><div class="ops"><button class="op">AUTOINCREMENT</button><button class="op">IDENTITY(1,1)</button><button class="op">SERIAL</button></div></div>
+  <div class="pergunta" data-certa="0" data-explica="Sem WHERE, o DELETE apaga todas as linhas da tabela."><p>3. O que acontece com DELETE FROM produto; ?</p><div class="ops"><button class="op">Apaga todas as linhas</button><button class="op">Dá erro</button><button class="op">Apaga a tabela</button></div></div>
+  <div class="pergunta" data-certa="1" data-explica="LEFT JOIN traz todas as linhas da tabela da esquerda, mesmo as que não têm par."><p>4. Quero listar TODAS as categorias, inclusive as sem produto. Qual JOIN?</p><div class="ops"><button class="op">INNER JOIN produto</button><button class="op">categoria LEFT JOIN produto</button><button class="op">produto LEFT JOIN categoria</button></div></div>
+  <div class="pergunta" data-certa="2" data-explica="WHERE filtra linhas antes do agrupamento; HAVING filtra os grupos depois do GROUP BY."><p>5. Para filtrar pelo resultado de um COUNT ou AVG, uso:</p><div class="ops"><button class="op">WHERE</button><button class="op">ORDER BY</button><button class="op">HAVING</button></div></div>
+  <div class="pergunta" data-certa="0" data-explica="Texto vai entre aspas simples nos dois bancos. Aspas duplas no PostgreSQL são para nomes de coluna."><p>6. Qual está certo nos dois bancos?</p><div class="ops"><button class="op">WHERE nome = 'Ana'</button><button class="op">WHERE nome = "Ana"</button><button class="op">WHERE nome == 'Ana'</button></div></div>
+  <p class="placar"></p>
+</div>
+</section>
+
+<!-- ================= DIA 5 · PROJETO ================= -->
+<section class="aula" id="d5-plano" data-mod="Dia 5 · Projeto final" data-cor="var(--d5)" data-titulo="Planejamento do projeto" data-min="20">
+<p class="objetivo"><strong>Objetivo</strong>Entender o que vamos construir e em que ordem trabalhar no dia da prova.</p>
+<h2>O enunciado (modelo de prova)</h2>
+<p><em>Uma loja de materiais de construção precisa controlar seu estoque. O sistema deve ter: login de usuário; uma tela principal que lista os produtos com nome, categoria, quantidade e preço, com busca por nome e destaque para produtos abaixo do estoque mínimo; e uma tela para cadastrar e editar produtos, validando os campos obrigatórios. Entregue também o script do banco de dados.</em></p>
+<h2>As 3 telas</h2>
+<div class="dias">
+  <div class="dia" style="--c:var(--d5)"><b>1 · Login</b><span>index.html</span><ul><li>Valida campos vazios</li><li>Mensagem de login inválido</li><li>Vai para o painel</li></ul></div>
+  <div class="dia" style="--c:var(--d5)"><b>2 · Painel</b><span>painel.html</span><ul><li>Tabela de produtos</li><li>Busca e resumo</li><li>Editar, excluir, sair</li></ul></div>
+  <div class="dia" style="--c:var(--d5)"><b>3 · Cadastro</b><span>produto.html</span><ul><li>Inclui e edita</li><li>Valida cada campo</li><li>Mensagem de sucesso</li></ul></div>
+</div>
+<h2>Estrutura de pastas</h2>
+<script type="text/plain" class="codigo" data-lang="texto">
+projeto-estoque/
+├── index.html          tela 1: login
+├── painel.html         tela 2: listagem
+├── produto.html        tela 3: cadastro/edição
+├── css/
+│   └── style.css       um CSS para as 3 telas
+├── js/
+│   ├── dados.js        "banco" no navegador (funções de CRUD)
+│   ├── login.js
+│   ├── painel.js
+│   └── produto.js
+└── sql/
+    ├── estoque_mysql.sql
+    └── estoque_postgresql.sql
+</script>
+<h2>Ordem de trabalho na prova</h2>
+<ol>
+  <li><strong>Leia o enunciado inteiro</strong> e sublinhe tabelas, campos e regras (10 min).</li>
+  <li><strong>Banco primeiro</strong>: DER no papel, script SQL, rode e teste com SELECT (30 a 40 min).</li>
+  <li><strong>HTML das 3 telas</strong>, sem estilo, só a estrutura (30 min).</li>
+  <li><strong>JavaScript</strong>: login, listagem, cadastro (1h). É onde vale mais ponto: funcionar.</li>
+  <li><strong>CSS</strong> por último (30 min). Tela feia que funciona vale mais que tela bonita quebrada.</li>
+  <li><strong>Teste tudo</strong> com o checklist da última aula (15 min).</li>
+</ol>
+<div class="atencao"><strong>Como o site guarda os dados.</strong> Este projeto usa o <code>localStorage</code> como "banco" dentro do navegador, imitando as mesmas tabelas do script SQL. Assim o site funciona só abrindo o HTML. Se a sua prova exigir o site gravando no MySQL de verdade, veja o anexo no fim do curso.</div>
+</section>
+
+<section class="aula" id="d5-banco" data-mod="Dia 5 · Projeto final" data-titulo="Passo 1: o banco de dados" data-min="35">
+<p class="objetivo"><strong>Objetivo</strong>Criar e testar o banco do sistema de estoque. Os dois scripts abaixo foram executados e testados.</p>
+<svg class="der" viewBox="0 0 640 215" role="img" aria-label="DER do estoque">
+  <g><rect x="10" y="20" width="180" height="90" rx="4"/><rect class="cab" x="10" y="20" width="180" height="26" rx="4"/><text class="t" x="22" y="38">usuario</text>
+  <text x="22" y="64">PK id</text><text x="22" y="82">nome, email</text><text x="22" y="100">senha</text></g>
+  <g><rect x="10" y="130" width="180" height="72" rx="4"/><rect class="cab" x="10" y="130" width="180" height="26" rx="4"/><text class="t" x="22" y="148">categoria</text>
+  <text x="22" y="174">PK id</text><text x="22" y="188">nome</text></g>
+  <g><rect x="380" y="60" width="240" height="140" rx="4"/><rect class="cab" x="380" y="60" width="240" height="26" rx="4"/><text class="t" x="392" y="78">produto</text>
+  <text x="392" y="104">PK id</text><text x="392" y="122">nome</text><text x="392" y="140">FK categoria_id</text><text x="392" y="158">quantidade, estoque_minimo</text><text x="392" y="176">preco, criado_em</text></g>
+  <path d="M190 161 H290 V136 H380"/><text x="198" y="155">1</text><text x="362" y="130">N</text>
+  <line x1="372" y1="128" x2="380" y2="136"/><line x1="372" y1="144" x2="380" y2="136"/>
+</svg>
+<h2>Versão MySQL</h2>
+<script type="text/plain" class="codigo" data-lang="sql" data-arquivo="sql/estoque_mysql.sql">
+-- =====================================================
+-- Banco de dados do Sistema de Estoque  |  MySQL
+-- Rodar no MySQL Workbench ou no terminal:  mysql -u root -p < estoque_mysql.sql
+-- =====================================================
+
+DROP DATABASE IF EXISTS estoque;
+CREATE DATABASE estoque;
+USE estoque;
+
+-- Tabela de usuários (quem faz login)
+CREATE TABLE usuario (
+    id     INT AUTO_INCREMENT PRIMARY KEY,
+    nome   VARCHAR(100) NOT NULL,
+    email  VARCHAR(100) NOT NULL UNIQUE,
+    senha  VARCHAR(255) NOT NULL
+);
+
+-- Tabela de categorias
+CREATE TABLE categoria (
+    id    INT AUTO_INCREMENT PRIMARY KEY,
+    nome  VARCHAR(50) NOT NULL
+);
+
+-- Tabela de produtos (1 categoria tem N produtos)
+CREATE TABLE produto (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    nome            VARCHAR(100)  NOT NULL,
+    categoria_id    INT           NOT NULL,
+    quantidade      INT           NOT NULL DEFAULT 0,
+    estoque_minimo  INT           NOT NULL DEFAULT 5,
+    preco           DECIMAL(10,2) NOT NULL,
+    criado_em       DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_produto_categoria
+        FOREIGN KEY (categoria_id) REFERENCES categoria(id)
+);
+
+-- Dados iniciais
+INSERT INTO usuario (nome, email, senha) VALUES
+('Administrador', 'admin@estoque.com', '123456');
+
+INSERT INTO categoria (nome) VALUES
+('Ferramentas'), ('Elétrica'), ('Hidráulica'), ('Escritório');
+
+INSERT INTO produto (nome, categoria_id, quantidade, estoque_minimo, preco) VALUES
+('Martelo de unha',      1, 25, 5, 39.90),
+('Chave de fenda 1/4',   1,  3, 5, 12.50),
+('Fio flexível 2,5mm',   2, 40, 10, 189.00),
+('Disjuntor 20A',        2,  2, 4, 27.80),
+('Cano PVC 25mm',        3, 60, 15, 18.40),
+('Resma papel A4',       4,  8, 10, 29.90);
+
+-- =====================================================
+-- Consultas que a prova costuma pedir
+-- =====================================================
+
+-- 1) Login: existe usuário com esse e-mail e senha?
+SELECT id, nome FROM usuario
+WHERE email = 'admin@estoque.com' AND senha = '123456';
+
+-- 2) Listar produtos com o nome da categoria (JOIN), em ordem alfabética
+SELECT p.id, p.nome, c.nome AS categoria, p.quantidade, p.preco
+FROM produto p
+INNER JOIN categoria c ON c.id = p.categoria_id
+ORDER BY p.nome;
+
+-- 3) Buscar produto pelo nome
+SELECT * FROM produto WHERE nome LIKE '%chave%';
+
+-- 4) Produtos abaixo do estoque mínimo (alerta)
+SELECT nome, quantidade, estoque_minimo
+FROM produto
+WHERE quantidade < estoque_minimo;
+
+-- 5) Quantidade de produtos e valor em estoque por categoria
+SELECT c.nome AS categoria,
+       COUNT(p.id)                 AS total_produtos,
+       SUM(p.quantidade * p.preco) AS valor_estoque
+FROM categoria c
+LEFT JOIN produto p ON p.categoria_id = c.id
+GROUP BY c.nome
+ORDER BY valor_estoque DESC;
+
+-- 6) Editar e excluir
+UPDATE produto SET quantidade = quantidade + 10 WHERE id = 2;
+DELETE FROM produto WHERE id = 6;
+</script>
+<h2>Versão PostgreSQL</h2>
+<script type="text/plain" class="codigo" data-lang="sql" data-arquivo="sql/estoque_postgresql.sql">
+-- =====================================================
+-- Banco de dados do Sistema de Estoque  |  PostgreSQL
+-- 1) No pgAdmin ou psql, crie o banco:   CREATE DATABASE estoque;
+-- 2) Conecte nele (no psql:  \c estoque ) e rode o resto deste arquivo.
+--    (PostgreSQL não tem USE; você troca de banco conectando nele.)
+-- =====================================================
+
+DROP TABLE IF EXISTS produto;
+DROP TABLE IF EXISTS categoria;
+DROP TABLE IF EXISTS usuario;
+
+-- SERIAL = número que aumenta sozinho (no MySQL é AUTO_INCREMENT)
+CREATE TABLE usuario (
+    id     SERIAL PRIMARY KEY,
+    nome   VARCHAR(100) NOT NULL,
+    email  VARCHAR(100) NOT NULL UNIQUE,
+    senha  VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE categoria (
+    id    SERIAL PRIMARY KEY,
+    nome  VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE produto (
+    id              SERIAL PRIMARY KEY,
+    nome            VARCHAR(100)  NOT NULL,
+    categoria_id    INT           NOT NULL,
+    quantidade      INT           NOT NULL DEFAULT 0,
+    estoque_minimo  INT           NOT NULL DEFAULT 5,
+    preco           NUMERIC(10,2) NOT NULL,
+    criado_em       TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_produto_categoria
+        FOREIGN KEY (categoria_id) REFERENCES categoria(id)
+);
+
+INSERT INTO usuario (nome, email, senha) VALUES
+('Administrador', 'admin@estoque.com', '123456');
+
+INSERT INTO categoria (nome) VALUES
+('Ferramentas'), ('Elétrica'), ('Hidráulica'), ('Escritório');
+
+INSERT INTO produto (nome, categoria_id, quantidade, estoque_minimo, preco) VALUES
+('Martelo de unha',      1, 25, 5, 39.90),
+('Chave de fenda 1/4',   1,  3, 5, 12.50),
+('Fio flexível 2,5mm',   2, 40, 10, 189.00),
+('Disjuntor 20A',        2,  2, 4, 27.80),
+('Cano PVC 25mm',        3, 60, 15, 18.40),
+('Resma papel A4',       4,  8, 10, 29.90);
+
+-- =====================================================
+-- Consultas que a prova costuma pedir
+-- =====================================================
+
+-- 1) Login
+SELECT id, nome FROM usuario
+WHERE email = 'admin@estoque.com' AND senha = '123456';
+
+-- 2) Produtos com o nome da categoria
+SELECT p.id, p.nome, c.nome AS categoria, p.quantidade, p.preco
+FROM produto p
+INNER JOIN categoria c ON c.id = p.categoria_id
+ORDER BY p.nome;
+
+-- 3) Busca por nome (ILIKE ignora maiúsculas/minúsculas; só existe no PostgreSQL)
+SELECT * FROM produto WHERE nome ILIKE '%chave%';
+
+-- 4) Abaixo do estoque mínimo
+SELECT nome, quantidade, estoque_minimo
+FROM produto
+WHERE quantidade < estoque_minimo;
+
+-- 5) Resumo por categoria
+SELECT c.nome AS categoria,
+       COUNT(p.id)                 AS total_produtos,
+       SUM(p.quantidade * p.preco) AS valor_estoque
+FROM categoria c
+LEFT JOIN produto p ON p.categoria_id = c.id
+GROUP BY c.nome
+ORDER BY valor_estoque DESC NULLS LAST;
+
+-- 6) Editar e excluir
+UPDATE produto SET quantidade = quantidade + 10 WHERE id = 2;
+DELETE FROM produto WHERE id = 6;
+</script>
+</section>
+
+<section class="aula" id="d5-login" data-mod="Dia 5 · Projeto final" data-titulo="Passo 2: tela de login" data-min="40">
+<p class="objetivo"><strong>Objetivo</strong>Criar o "banco" do navegador e a tela 1.</p>
+<h2>dados.js: o banco no navegador</h2>
+<p>Este arquivo é carregado nas 3 telas. Cada função corresponde a um comando SQL (está comentado em cima de cada uma). Assim o raciocínio é o mesmo do banco de verdade.</p>
+<script type="text/plain" class="codigo" data-lang="js" data-arquivo="js/dados.js">
+// =====================================================
+// dados.js — "banco de dados" do site usando localStorage.
+// Imita as tabelas do script SQL (usuario, categoria, produto).
+// Todas as telas carregam este arquivo antes do seu próprio JS.
+// =====================================================
+
+// Tabelas fixas (iguais aos INSERTs do script SQL)
+const USUARIOS = [
+  { id: 1, nome: "Administrador", email: "admin@estoque.com", senha: "123456" }
+];
+
+const CATEGORIAS = [
+  { id: 1, nome: "Ferramentas" },
+  { id: 2, nome: "Elétrica" },
+  { id: 3, nome: "Hidráulica" },
+  { id: 4, nome: "Escritório" }
+];
+
+const PRODUTOS_INICIAIS = [
+  { id: 1, nome: "Martelo de unha",    categoria_id: 1, quantidade: 25, estoque_minimo: 5,  preco: 39.9 },
+  { id: 2, nome: "Chave de fenda 1/4", categoria_id: 1, quantidade: 3,  estoque_minimo: 5,  preco: 12.5 },
+  { id: 3, nome: "Fio flexível 2,5mm", categoria_id: 2, quantidade: 40, estoque_minimo: 10, preco: 189 },
+  { id: 4, nome: "Disjuntor 20A",      categoria_id: 2, quantidade: 2,  estoque_minimo: 4,  preco: 27.8 },
+  { id: 5, nome: "Cano PVC 25mm",      categoria_id: 3, quantidade: 60, estoque_minimo: 15, preco: 18.4 },
+  { id: 6, nome: "Resma papel A4",     categoria_id: 4, quantidade: 8,  estoque_minimo: 10, preco: 29.9 }
+];
+
+// ---------- PRODUTOS (o "CRUD") ----------
+
+// SELECT * FROM produto
+function listarProdutos() {
+  const texto = localStorage.getItem("produtos");
+  if (texto === null) {
+    // Primeira vez: grava os produtos iniciais
+    localStorage.setItem("produtos", JSON.stringify(PRODUTOS_INICIAIS));
+    return PRODUTOS_INICIAIS;
+  }
+  return JSON.parse(texto);
+}
+
+// SELECT * FROM produto WHERE id = ?
+function buscarProduto(id) {
+  return listarProdutos().find(p => p.id === id);
+}
+
+// INSERT (sem id) ou UPDATE (com id)
+function salvarProduto(produto) {
+  const produtos = listarProdutos();
+  if (produto.id) {
+    const posicao = produtos.findIndex(p => p.id === produto.id);
+    produtos[posicao] = produto;
+  } else {
+    // Imita o AUTO_INCREMENT: maior id + 1
+    const maiorId = produtos.reduce((maior, p) => Math.max(maior, p.id), 0);
+    produto.id = maiorId + 1;
+    produtos.push(produto);
+  }
+  localStorage.setItem("produtos", JSON.stringify(produtos));
+}
+
+// DELETE FROM produto WHERE id = ?
+function excluirProduto(id) {
+  const produtos = listarProdutos().filter(p => p.id !== id);
+  localStorage.setItem("produtos", JSON.stringify(produtos));
+}
+
+// Parecido com um JOIN: devolve o nome da categoria
+function nomeCategoria(id) {
+  const categoria = CATEGORIAS.find(c => c.id === id);
+  return categoria ? categoria.nome : "-";
+}
+
+// ---------- LOGIN / SESSÃO ----------
+
+// SELECT * FROM usuario WHERE email = ? AND senha = ?
+function fazerLogin(email, senha) {
+  const usuario = USUARIOS.find(u => u.email === email && u.senha === senha);
+  if (usuario) {
+    sessionStorage.setItem("usuarioLogado", usuario.nome);
+    return true;
+  }
+  return false;
+}
+
+function usuarioLogado() {
+  return sessionStorage.getItem("usuarioLogado");
+}
+
+// Coloque no começo das telas protegidas
+function exigirLogin() {
+  if (!usuarioLogado()) {
+    window.location.href = "index.html";
+  }
+}
+
+function sair() {
+  sessionStorage.removeItem("usuarioLogado");
+  window.location.href = "index.html";
+}
+
+// Formata 39.9 -> "R$ 39,90"
+function formatarPreco(valor) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+</script>
+<h2>index.html</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-arquivo="index.html">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Sistema de Estoque</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- TELA 1: LOGIN -->
+  <main class="tela-login">
+    <form id="formLogin" class="caixa-login" novalidate>
+      <h1>Estoque</h1>
+      <p>Entre com seu usuário para continuar</p>
+
+      <div class="campo">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com">
+        <span class="erro" id="erroEmail"></span>
+      </div>
+
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" placeholder="Sua senha">
+        <span class="erro" id="erroSenha"></span>
+      </div>
+
+      <span class="erro" id="erroLogin"></span>
+      <button type="submit" class="btn">Entrar</button>
+
+      <p class="dica">Teste: admin@estoque.com / 123456</p>
+    </form>
+  </main>
+
+  <script src="js/dados.js"><\/script>
+  <script src="js/login.js"><\/script>
+</body>
+</html>
+</script>
+<h2>login.js</h2>
+<script type="text/plain" class="codigo" data-lang="js" data-arquivo="js/login.js">
+// login.js — validação e entrada no sistema
+
+const formLogin = document.getElementById("formLogin");
+
+formLogin.addEventListener("submit", function (evento) {
+  evento.preventDefault(); // impede a página de recarregar
+
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+
+  // Limpa erros antigos
+  document.getElementById("erroEmail").textContent = "";
+  document.getElementById("erroSenha").textContent = "";
+  document.getElementById("erroLogin").textContent = "";
+
+  // Validação dos campos
+  let valido = true;
+  if (email === "") {
+    document.getElementById("erroEmail").textContent = "Informe o e-mail.";
+    valido = false;
+  } else if (!email.includes("@")) {
+    document.getElementById("erroEmail").textContent = "E-mail inválido.";
+    valido = false;
+  }
+  if (senha === "") {
+    document.getElementById("erroSenha").textContent = "Informe a senha.";
+    valido = false;
+  }
+  if (!valido) return;
+
+  // Confere usuário e senha
+  if (fazerLogin(email, senha)) {
+    window.location.href = "painel.html";
+  } else {
+    document.getElementById("erroLogin").textContent = "E-mail ou senha incorretos.";
+  }
+});
+</script>
+<p><strong>Teste:</strong> clique em Entrar com tudo vazio (aparecem 2 erros), senha errada (erro de login), depois <code>admin@estoque.com</code> / <code>123456</code>.</p>
+</section>
+
+<section class="aula" id="d5-painel" data-mod="Dia 5 · Projeto final" data-titulo="Passo 3: tela do painel" data-min="45">
+<p class="objetivo"><strong>Objetivo</strong>Listar os produtos com busca, resumo, alerta de estoque baixo, editar, excluir e sair.</p>
+<h2>painel.html</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-arquivo="painel.html">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel | Sistema de Estoque</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- TELA 2: PAINEL (listagem) -->
+  <header class="topo">
+    <strong>Sistema de Estoque</strong>
+    <div>
+      Olá, <span id="nomeUsuario"></span> |
+      <a href="#" id="btnSair">Sair</a>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <h2>Produtos</h2>
+    <br>
+
+    <section class="resumo">
+      <div class="cartao"><span>Produtos cadastrados</span><strong id="totalProdutos">0</strong></div>
+      <div class="cartao"><span>Itens em estoque</span><strong id="totalItens">0</strong></div>
+      <div class="cartao"><span>Abaixo do mínimo</span><strong id="totalBaixo">0</strong></div>
+    </section>
+
+    <div class="barra-acoes">
+      <input type="search" id="busca" placeholder="Buscar produto pelo nome...">
+      <a href="produto.html" class="btn">+ Novo produto</a>
+    </div>
+
+    <div class="tabela-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Qtd.</th>
+            <th>Preço</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabela"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="js/dados.js"><\/script>
+  <script src="js/painel.js"><\/script>
+</body>
+</html>
+</script>
+<h2>painel.js</h2>
+<script type="text/plain" class="codigo" data-lang="js" data-arquivo="js/painel.js">
+// painel.js — lista, busca e exclusão de produtos
+
+exigirLogin(); // sem login, volta para a tela 1
+
+document.getElementById("nomeUsuario").textContent = usuarioLogado();
+document.getElementById("btnSair").addEventListener("click", sair);
+
+const corpoTabela = document.getElementById("corpoTabela");
+const campoBusca = document.getElementById("busca");
+
+function mostrarProdutos() {
+  const termo = campoBusca.value.toLowerCase();
+
+  // Filtro igual a: WHERE nome LIKE '%termo%'
+  const produtos = listarProdutos()
+    .filter(p => p.nome.toLowerCase().includes(termo))
+    .sort((a, b) => a.nome.localeCompare(b.nome)); // ORDER BY nome
+
+  corpoTabela.innerHTML = "";
+
+  if (produtos.length === 0) {
+    corpoTabela.innerHTML = '<tr><td colspan="5">Nenhum produto encontrado.</td></tr>';
+  }
+
+  produtos.forEach(function (p) {
+    const baixo = p.quantidade < p.estoque_minimo;
+    const linha = document.createElement("tr");
+    if (baixo) linha.classList.add("baixo");
+
+    linha.innerHTML = `
+      <td>${p.nome} ${baixo ? '<span class="selo">Estoque baixo</span>' : ""}</td>
+      <td>${nomeCategoria(p.categoria_id)}</td>
+      <td>${p.quantidade}</td>
+      <td>${formatarPreco(p.preco)}</td>
+      <td>
+        <a href="produto.html?id=${p.id}" class="btn btn-pequeno">Editar</a>
+        <button class="btn btn-pequeno btn-perigo" data-id="${p.id}">Excluir</button>
+      </td>
+    `;
+    corpoTabela.appendChild(linha);
+  });
+
+  atualizarResumo();
+}
+
+function atualizarResumo() {
+  const todos = listarProdutos();
+  const itens = todos.reduce((soma, p) => soma + p.quantidade, 0);
+  const baixos = todos.filter(p => p.quantidade < p.estoque_minimo).length;
+
+  document.getElementById("totalProdutos").textContent = todos.length;
+  document.getElementById("totalItens").textContent = itens;
+  document.getElementById("totalBaixo").textContent = baixos;
+}
+
+// Um único "ouvinte" na tabela pega o clique de qualquer botão Excluir
+corpoTabela.addEventListener("click", function (evento) {
+  const id = evento.target.dataset.id;
+  if (!id) return;
+  if (confirm("Deseja mesmo excluir este produto?")) {
+    excluirProduto(Number(id));
+    mostrarProdutos();
+  }
+});
+
+campoBusca.addEventListener("input", mostrarProdutos);
+
+mostrarProdutos();
+</script>
+<h3>Pontos para entender</h3>
+<ul>
+  <li><code>exigirLogin()</code> na primeira linha protege a página.</li>
+  <li><code>mostrarProdutos()</code> limpa o <code>tbody</code> e recria as linhas. É chamada ao abrir, a cada tecla na busca e depois de excluir.</li>
+  <li>O botão Excluir carrega o id em <code>data-id</code>. Um único ouvinte no <code>tbody</code> pega o clique de todos os botões.</li>
+  <li>O link Editar leva o id na URL: <code>produto.html?id=3</code>.</li>
+</ul>
+</section>
+
+<section class="aula" id="d5-cadastro" data-mod="Dia 5 · Projeto final" data-titulo="Passo 4: tela de cadastro e CSS" data-min="50">
+<p class="objetivo"><strong>Objetivo</strong>Cadastrar e editar produtos com validação, e dar o visual final às 3 telas.</p>
+<h2>produto.html</h2>
+<script type="text/plain" class="codigo" data-lang="html" data-arquivo="produto.html">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produto | Sistema de Estoque</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- TELA 3: CADASTRO / EDIÇÃO -->
+  <header class="topo">
+    <strong>Sistema de Estoque</strong>
+    <a href="painel.html">Voltar ao painel</a>
+  </header>
+
+  <main class="conteudo">
+    <h2 id="titulo">Novo produto</h2>
+    <br>
+
+    <form id="formProduto" class="formulario" novalidate>
+      <div id="mensagem" class="mensagem"></div>
+
+      <div class="campo">
+        <label for="nome">Nome do produto *</label>
+        <input type="text" id="nome" maxlength="100">
+        <span class="erro" id="erroNome"></span>
+      </div>
+
+      <div class="campo">
+        <label for="categoria">Categoria *</label>
+        <select id="categoria">
+          <option value="">Selecione...</option>
+        </select>
+        <span class="erro" id="erroCategoria"></span>
+      </div>
+
+      <div class="linha">
+        <div class="campo">
+          <label for="quantidade">Quantidade *</label>
+          <input type="number" id="quantidade" min="0">
+          <span class="erro" id="erroQuantidade"></span>
+        </div>
+        <div class="campo">
+          <label for="minimo">Estoque mínimo *</label>
+          <input type="number" id="minimo" min="0" value="5">
+          <span class="erro" id="erroMinimo"></span>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="preco">Preço (R$) *</label>
+        <input type="number" id="preco" min="0" step="0.01">
+        <span class="erro" id="erroPreco"></span>
+      </div>
+
+      <div class="botoes">
+        <button type="submit" class="btn">Salvar</button>
+        <a href="painel.html" class="btn btn-secundario">Cancelar</a>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/dados.js"><\/script>
+  <script src="js/produto.js"><\/script>
+</body>
+</html>
+</script>
+<h2>produto.js</h2>
+<script type="text/plain" class="codigo" data-lang="js" data-arquivo="js/produto.js">
+// produto.js — cadastrar (INSERT) e editar (UPDATE)
+
+exigirLogin();
+
+// Preenche o <select> com as categorias
+const selectCategoria = document.getElementById("categoria");
+CATEGORIAS.forEach(function (c) {
+  const opcao = document.createElement("option");
+  opcao.value = c.id;
+  opcao.textContent = c.nome;
+  selectCategoria.appendChild(opcao);
+});
+
+// Se a URL tiver ?id=3, estamos editando o produto 3
+const parametros = new URLSearchParams(window.location.search);
+const idEdicao = Number(parametros.get("id"));
+
+if (idEdicao) {
+  const p = buscarProduto(idEdicao);
+  if (p) {
+    document.getElementById("titulo").textContent = "Editar produto";
+    document.getElementById("nome").value = p.nome;
+    selectCategoria.value = p.categoria_id;
+    document.getElementById("quantidade").value = p.quantidade;
+    document.getElementById("minimo").value = p.estoque_minimo;
+    document.getElementById("preco").value = p.preco;
+  }
+}
+
+// Mostra a mensagem de erro de um campo e devolve false
+function erro(idCampo, texto) {
+  document.getElementById(idCampo).textContent = texto;
+  return false;
+}
+
+document.getElementById("formProduto").addEventListener("submit", function (evento) {
+  evento.preventDefault();
+
+  document.querySelectorAll(".erro").forEach(span => (span.textContent = ""));
+
+  const nome = document.getElementById("nome").value.trim();
+  const categoria = selectCategoria.value;
+  const quantidade = document.getElementById("quantidade").value;
+  const minimo = document.getElementById("minimo").value;
+  const preco = document.getElementById("preco").value;
+
+  // Validações (as mesmas regras do NOT NULL do banco)
+  let valido = true;
+  if (nome.length < 3) valido = erro("erroNome", "O nome precisa ter pelo menos 3 letras.");
+  if (categoria === "") valido = erro("erroCategoria", "Escolha uma categoria.");
+  if (quantidade === "" || Number(quantidade) < 0) valido = erro("erroQuantidade", "Informe uma quantidade de 0 ou mais.");
+  if (minimo === "" || Number(minimo) < 0) valido = erro("erroMinimo", "Informe o estoque mínimo.");
+  if (preco === "" || Number(preco) <= 0) valido = erro("erroPreco", "Informe um preço maior que zero.");
+  if (!valido) return;
+
+  salvarProduto({
+    id: idEdicao || null,
+    nome: nome,
+    categoria_id: Number(categoria),
+    quantidade: Number(quantidade),
+    estoque_minimo: Number(minimo),
+    preco: Number(preco)
+  });
+
+  const mensagem = document.getElementById("mensagem");
+  mensagem.textContent = "Produto salvo com sucesso! Voltando ao painel...";
+  mensagem.classList.add("ok");
+  setTimeout(() => (window.location.href = "painel.html"), 1200);
+});
+</script>
+<p>A mesma tela serve para incluir e editar: se a URL tem <code>?id=</code>, os campos são preenchidos e o <code>salvarProduto</code> faz UPDATE; se não tem, faz INSERT.</p>
+<h2>style.css</h2>
+<script type="text/plain" class="codigo" data-lang="css" data-arquivo="css/style.css">
+/* ===== Variáveis de cor (mude aqui para trocar o tema todo) ===== */
+:root {
+  --primaria: #1d4ed8;
+  --primaria-escura: #1e3a8a;
+  --fundo: #f1f5f9;
+  --card: #ffffff;
+  --texto: #0f172a;
+  --cinza: #64748b;
+  --borda: #e2e8f0;
+  --perigo: #dc2626;
+  --sucesso: #16a34a;
+  --alerta: #f59e0b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+/* ===== Botões ===== */
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--primaria);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:hover { background: var(--primaria-escura); }
+.btn-secundario { background: var(--cinza); }
+.btn-perigo { background: var(--perigo); }
+.btn-pequeno { padding: 6px 10px; font-size: 13px; }
+
+/* ===== Formulários ===== */
+.campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.campo label { font-weight: bold; font-size: 14px; }
+.campo input, .campo select {
+  padding: 10px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  font-size: 15px;
+}
+.campo input:focus, .campo select:focus { outline: 2px solid var(--primaria); }
+.erro { color: var(--perigo); font-size: 13px; min-height: 16px; }
+
+/* ===== Tela 1: Login ===== */
+.tela-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.caixa-login {
+  background: var(--card);
+  width: 100%;
+  max-width: 380px;
+  padding: 32px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+.caixa-login h1 { color: var(--primaria); margin-bottom: 4px; }
+.caixa-login p { color: var(--cinza); margin-bottom: 24px; }
+.caixa-login .btn { width: 100%; }
+.dica { margin-top: 16px; font-size: 13px; color: var(--cinza); text-align: center; }
+
+/* ===== Cabeçalho (telas 2 e 3) ===== */
+.topo {
+  background: var(--primaria);
+  color: #fff;
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.topo a { color: #fff; }
+
+.conteudo { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+
+/* ===== Tela 2: Painel ===== */
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.cartao { background: var(--card); padding: 16px; border-radius: 8px; border: 1px solid var(--borda); }
+.cartao span { color: var(--cinza); font-size: 13px; }
+.cartao strong { display: block; font-size: 26px; margin-top: 4px; }
+
+.barra-acoes { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.barra-acoes input { flex: 1; min-width: 200px; padding: 10px; border: 1px solid var(--borda); border-radius: 6px; }
+
+.tabela-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--card); }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--borda); }
+th { background: #e2e8f0; font-size: 13px; text-transform: uppercase; }
+tr.baixo { background: #fef3c7; }
+.selo { padding: 2px 8px; border-radius: 10px; font-size: 12px; color: #fff; background: var(--alerta); }
+
+/* ===== Tela 3: Cadastro ===== */
+.formulario { background: var(--card); padding: 24px; border-radius: 8px; max-width: 600px; }
+.linha { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.botoes { display: flex; gap: 12px; }
+
+.mensagem { padding: 12px; border-radius: 6px; margin-bottom: 16px; display: none; }
+.mensagem.ok { display: block; background: #dcfce7; color: var(--sucesso); }
+
+/* ===== Celular ===== */
+@media (max-width: 600px) {
+  .linha { grid-template-columns: 1fr; }
+  .topo { flex-direction: column; }
+}
+</script>
+</section>
+
+<section class="aula" id="d5-checklist" data-mod="Dia 5 · Projeto final" data-titulo="Checklist e simulado" data-min="180">
+<p class="objetivo"><strong>Objetivo</strong>Conferir a entrega e treinar do zero, com tempo, como no dia da prova.</p>
+<h2>Checklist antes de entregar</h2>
+<div class="tab-wrap"><table class="tab">
+<tr><th>Banco</th><th>Telas</th><th>Código</th></tr>
+<tr><td>
+Script roda do início ao fim sem erro<br>
+Toda tabela tem PK<br>
+FK ligando as tabelas certas<br>
+Campos obrigatórios com NOT NULL<br>
+Dados de exemplo inseridos<br>
+SELECT com JOIN funcionando
+</td><td>
+Login recusa vazio e senha errada<br>
+Painel não abre sem login<br>
+Lista aparece e a busca filtra<br>
+Cadastro valida todos os campos<br>
+Editar abre com os dados preenchidos<br>
+Excluir pede confirmação<br>
+Botão Sair funciona
+</td><td>
+Nenhum erro no console (F12)<br>
+Nomes claros de id e variáveis<br>
+Indentação organizada<br>
+Arquivos nas pastas certas<br>
+Labels ligados aos inputs<br>
+Funciona no celular (F12, modo dispositivo)
+</td></tr></table></div>
+
+<h2>Simulado: refaça sem olhar</h2>
+<p>Separe 3 horas, feche o curso e construa este sistema do zero. Só abra o código do projeto se travar por mais de 10 minutos.</p>
+<div class="exercicio"><strong>Enunciado do simulado: Controle de Empréstimo de Ferramentas</strong>
+<p>A oficina da escola empresta ferramentas aos alunos. Crie:</p>
+<ol>
+  <li>Banco com as tabelas <code>usuario</code> (login), <code>ferramenta</code> (id, nome, codigo único, situacao: 'disponível' ou 'emprestada') e <code>emprestimo</code> (id, ferramenta_id FK, aluno, data_retirada, data_devolucao que pode ser nula). Insira 5 ferramentas e 2 empréstimos. Escreva um SELECT que liste os empréstimos em aberto com o nome da ferramenta.</li>
+  <li>Tela de login com validação.</li>
+  <li>Tela principal listando as ferramentas, com busca por nome e destaque para as emprestadas.</li>
+  <li>Tela de cadastro de ferramenta, com nome obrigatório (mínimo 3 letras) e código obrigatório.</li>
+</ol>
+</div>
+<details class="gabarito"><summary>Dica para o banco do simulado (MySQL)</summary><div>
+<script type="text/plain" class="codigo" data-lang="sql" data-arquivo="MySQL">
+CREATE TABLE ferramenta (
+    id        INT AUTO_INCREMENT PRIMARY KEY,
+    nome      VARCHAR(100) NOT NULL,
+    codigo    VARCHAR(20)  NOT NULL UNIQUE,
+    situacao  VARCHAR(20)  NOT NULL DEFAULT 'disponível'
+);
+CREATE TABLE emprestimo (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    ferramenta_id   INT NOT NULL,
+    aluno           VARCHAR(100) NOT NULL,
+    data_retirada   DATE NOT NULL,
+    data_devolucao  DATE NULL,
+    FOREIGN KEY (ferramenta_id) REFERENCES ferramenta(id)
+);
+
+-- empréstimos em aberto
+SELECT e.id, f.nome AS ferramenta, e.aluno, e.data_retirada
+FROM emprestimo e
+INNER JOIN ferramenta f ON f.id = e.ferramenta_id
+WHERE e.data_devolucao IS NULL;
+</script>
+<p>No PostgreSQL troque <code>INT AUTO_INCREMENT</code> por <code>SERIAL</code> e retire o <code>USE</code>.</p>
+</div></details>
+
+<h2>Erros mais comuns e como resolver</h2>
+<div class="tab-wrap"><table class="tab">
+<tr><th>Sintoma</th><th>Causa provável</th></tr>
+<tr><td>CSS não aplica</td><td>Caminho errado no <code>href</code>, ou falta <code>rel="stylesheet"</code></td></tr>
+<tr><td>JS não faz nada</td><td>Erro no console (F12). Ou o <code>script</code> está no head e roda antes do HTML existir: coloque no fim do body</td></tr>
+<tr><td><code>Cannot read properties of null</code></td><td>O <code>id</code> no <code>getElementById</code> não existe ou está escrito diferente</td></tr>
+<tr><td>Página recarrega ao salvar</td><td>Faltou <code>evento.preventDefault()</code></td></tr>
+<tr><td>Conta dá "105" em vez de 15</td><td>Faltou <code>Number()</code> no valor do input</td></tr>
+<tr><td>Erro de FK no INSERT</td><td>O id informado não existe na tabela pai, ou as tabelas foram criadas fora de ordem</td></tr>
+<tr><td>Erro de sintaxe no SQL</td><td>Vírgula sobrando antes do <code>)</code>, ou aspas duplas em texto no PostgreSQL</td></tr>
+</table></div>
+</section>
+
+<!-- ================= ANEXO ================= -->
+<section class="aula" id="anexo-node" data-mod="Anexo" data-cor="var(--muted)" data-titulo="Ligar o site ao MySQL de verdade" data-min="40">
+<p class="objetivo"><strong>Objetivo</strong>Só se a prova exigir: fazer o site ler e gravar no MySQL usando Node.js. Este servidor foi testado contra o banco do projeto.</p>
+<p>O navegador não conversa direto com o banco. Precisa de um programa no meio (o <strong>back-end</strong>). Com Node.js e Express são 3 passos:</p>
+<ol>
+  <li>Na pasta do projeto, rode <code>npm init -y</code> e <code>npm install express mysql2</code>.</li>
+  <li>Mova os HTML, <code>css</code> e <code>js</code> para uma pasta <code>public</code>, crie o <code>server.js</code> abaixo e rode <code>node server.js</code>.</li>
+  <li>Abra <code>http://localhost:3000</code> (não use mais o Live Server).</li>
+</ol>
+<script type="text/plain" class="codigo" data-lang="js" data-arquivo="server.js">
+// server.js — liga o site ao MySQL de verdade
+// Instalar:  npm init -y   e   npm install express mysql2
+// Rodar:     node server.js   e abrir http://localhost:3000
+const express = require("express");
+const mysql = require("mysql2");
+
+const app = express();
+app.use(express.json());           // entende JSON enviado pelo fetch
+app.use(express.static("public")); // serve os .html, .css e .js da pasta public
+
+const banco = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "root",   // a senha do MySQL da sua máquina
+  database: "estoque"
+});
+
+// LOGIN
+app.post("/api/login", (req, res) => {
+  const sql = "SELECT id, nome FROM usuario WHERE email = ? AND senha = ?";
+  banco.query(sql, [req.body.email, req.body.senha], (erro, linhas) => {
+    if (erro) return res.status(500).json(erro);
+    if (linhas.length === 0) return res.status(401).json({ msg: "Login inválido" });
+    res.json(linhas[0]);
+  });
+});
+
+// LISTAR
+app.get("/api/produtos", (req, res) => {
+  const sql = `SELECT p.*, c.nome AS categoria
+               FROM produto p JOIN categoria c ON c.id = p.categoria_id
+               ORDER BY p.nome`;
+  banco.query(sql, (erro, linhas) => {
+    if (erro) return res.status(500).json(erro);
+    res.json(linhas);
+  });
+});
+
+// CADASTRAR
+app.post("/api/produtos", (req, res) => {
+  const p = req.body;
+  const sql = `INSERT INTO produto (nome, categoria_id, quantidade, estoque_minimo, preco)
+               VALUES (?, ?, ?, ?, ?)`;
+  banco.query(sql, [p.nome, p.categoria_id, p.quantidade, p.estoque_minimo, p.preco], (erro, r) => {
+    if (erro) return res.status(500).json(erro);
+    res.json({ id: r.insertId });
+  });
+});
+
+// EXCLUIR
+app.delete("/api/produtos/:id", (req, res) => {
+  banco.query("DELETE FROM produto WHERE id = ?", [req.params.id], (erro) => {
+    if (erro) return res.status(500).json(erro);
+    res.json({ ok: true });
+  });
+});
+
+app.listen(3000, () => console.log("Rodando em http://localhost:3000"));
+</script>
+<h2>Trocando o localStorage pelo servidor</h2>
+<p>No front-end, as funções do <code>dados.js</code> passam a usar <code>fetch</code>. Exemplo do login e da listagem:</p>
+<script type="text/plain" class="codigo" data-lang="js">
+// LOGIN (no login.js, no lugar de fazerLogin)
+const resposta = await fetch("/api/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email: email, senha: senha })
+});
+if (resposta.ok) {
+  const usuario = await resposta.json();
+  sessionStorage.setItem("usuarioLogado", usuario.nome);
+  window.location.href = "painel.html";
+} else {
+  document.getElementById("erroLogin").textContent = "E-mail ou senha incorretos.";
+}
+
+// LISTAGEM (no painel.js)
+const produtos = await (await fetch("/api/produtos")).json();
+// o MySQL devolve DECIMAL como texto: use Number(p.preco) antes de formatar
+
+// Para usar await, a função precisa ser async:
+// formLogin.addEventListener("submit", async function (evento) { ... });
+</script>
+<p>Para PostgreSQL a ideia é a mesma com o pacote <code>pg</code>; muda só a conexão e os marcadores, que viram <code>$1, $2</code> em vez de <code>?</code>.</p>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // ---------- Armazenamento seguro ----------
+  const CHAVE = "saep5-concluidas";
+  let feitas = new Set();
+  try { feitas = new Set(JSON.parse(localStorage.getItem(CHAVE) || "[]")); } catch (e) {}
+  function gravar(){ try { localStorage.setItem(CHAVE, JSON.stringify([...feitas])); } catch (e) {} }
+
+  const aulas = [...document.querySelectorAll(".aula")];
+
+  // ---------- Blocos de código ----------
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  function realce(code, lang){
+    let h = esc(code);
+    if (lang === "html") h = h.replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="c">$1</span>');
+    if (lang === "sql") h = h.replace(/(--[^\n]*)/g,'<span class="c">$1</span>');
+    if (lang === "js") h = h.replace(/(^|[^:"'`])(\/\/[^\n]*)/g,'$1<span class="c">$2</span>');
+    if (lang === "css") h = h.replace(/(\/\*[\s\S]*?\*\/)/g,'<span class="c">$1</span>');
+    return h;
+  }
+  function limpar(t){
+    t = t.replace(/<\\\/script>/g, "</" + "script>");
+    t = t.replace(/^\n+/, "").replace(/\s+$/, "");
+    return t;
+  }
+  function montarExec(lang, code){
+    if (lang === "js") {
+      return '<!DOCTYPE html><meta charset="utf-8"><style>body{font:14px/1.6 Consolas,monospace;margin:12px;color:#0f172a}</style><pre id="o"></pre><script>' +
+        'const __o=document.getElementById("o");' +
+        'console.log=(...a)=>{__o.textContent+=a.map(x=>typeof x==="object"?JSON.stringify(x):String(x)).join(" ")+"\\n"};' +
+        'try{' + code.replace(/<\/script/gi,"<\\/script") + '\n}catch(e){console.log("Erro: "+e.message)}<' + '/script>';
+    }
+    return '<!DOCTYPE html><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:12px}</style>' + code;
+  }
+  let n = 0;
+  document.querySelectorAll("script.codigo").forEach(function(s){
+    const lang = s.dataset.lang || "texto";
+    const code = limpar(s.textContent);
+    const bloco = document.createElement("div");
+    bloco.className = "bloco";
+    const rotulo = s.dataset.arquivo ? s.dataset.arquivo : lang.toUpperCase();
+    const id = "cod" + (n++);
+    bloco.innerHTML = '<div class="bloco-topo"><span>' + esc(rotulo) + '</span><span class="acoes">' +
+      (s.hasAttribute("data-run") ? '<button type="button" class="rodar">Executar</button>' : '') +
+      '<button type="button" class="copiar">Copiar</button></span></div><pre id="' + id + '"><code>' + realce(code, lang) + '</code></pre>';
+    s.replaceWith(bloco);
+    bloco.querySelector(".copiar").addEventListener("click", function(){
+      const b = this;
+      const feito = () => { b.textContent = "Copiado"; setTimeout(() => b.textContent = "Copiar", 1500); };
+      try {
+        navigator.clipboard.writeText(code).then(feito, () => selecionar(id, b));
+      } catch (e) { selecionar(id, b); }
+    });
+    const rodar = bloco.querySelector(".rodar");
+    if (rodar) rodar.addEventListener("click", function(){
+      let f = bloco.querySelector("iframe");
+      if (!f) { f = document.createElement("iframe"); f.setAttribute("sandbox","allow-scripts allow-forms allow-modals"); f.title = "Resultado do exemplo"; bloco.appendChild(f); }
+      f.srcdoc = montarExec(lang, code);
+      this.textContent = "Executar de novo";
+    });
+  });
+  function selecionar(id, b){
+    const r = document.createRange(); r.selectNodeContents(document.getElementById(id));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    b.textContent = "Selecionado: Ctrl+C";
+  }
+
+  // ---------- Cabeçalho e rodapé de cada aula ----------
+  let corAtual = "var(--accent)", modAtual = "";
+  const modulos = [];
+  aulas.forEach(function(a, i){
+    if (a.dataset.cor) corAtual = a.dataset.cor;
+    a.dataset.corFinal = corAtual;
+    if (a.dataset.mod !== modAtual) { modAtual = a.dataset.mod; modulos.push({ nome: modAtual, cor: corAtual, aulas: [] }); }
+    modulos[modulos.length - 1].aulas.push(a);
+
+    const r = document.createElement("p");
+    r.className = "rotulo";
+    r.innerHTML = '<b style="background:' + corAtual + '">' + esc(a.dataset.mod) + '</b><span>Aula ' + (i + 1) + ' de ' + aulas.length + '</span><span>' + a.dataset.min + ' min</span>';
+    a.prepend(r);
+    if (!a.querySelector("h1")) {
+      const h = document.createElement("h1"); h.textContent = a.dataset.titulo; r.after(h);
+    }
+    const ant = aulas[i - 1], prox = aulas[i + 1];
+    const rod = document.createElement("div");
+    rod.className = "rodape-aula";
+    rod.innerHTML = (ant ? '<a class="btn" href="#' + ant.id + '">← ' + esc(ant.dataset.titulo) + '</a>' : '<span></span>') +
+      '<button type="button" class="btn marcar"></button>' +
+      (prox ? '<a class="btn prim" href="#' + prox.id + '">' + esc(prox.dataset.titulo) + ' →</a>' : '<span></span>');
+    a.appendChild(rod);
+    rod.querySelector(".marcar").addEventListener("click", function(){
+      if (feitas.has(a.id)) feitas.delete(a.id); else feitas.add(a.id);
+      gravar(); atualizar();
+    });
+  });
+
+  // ---------- Menu lateral ----------
+  const menu = document.getElementById("menu");
+  modulos.forEach(function(m){
+    const d = document.createElement("div");
+    d.className = "modulo";
+    d.innerHTML = '<h3><i style="background:' + m.cor + '"></i>' + esc(m.nome) + '</h3><ol>' +
+      m.aulas.map(a => '<li><a href="#' + a.id + '" data-id="' + a.id + '"><span class="chk"></span><span>' + esc(a.dataset.titulo) + '</span></a></li>').join("") + '</ol>';
+    menu.appendChild(d);
+  });
+  const lateral = document.getElementById("lateral"), abrir = document.getElementById("abrirMenu");
+  abrir.addEventListener("click", function(){
+    const aberto = lateral.classList.toggle("aberta");
+    abrir.setAttribute("aria-expanded", aberto);
+    abrir.textContent = aberto ? "Fechar lista de aulas" : "Ver todas as aulas";
+  });
+
+  function atualizar(){
+    menu.querySelectorAll("a[data-id]").forEach(l => l.classList.toggle("feita", feitas.has(l.dataset.id)));
+    aulas.forEach(function(a){
+      const b = a.querySelector(".marcar");
+      const ok = feitas.has(a.id);
+      b.textContent = ok ? "✓ Concluída" : "Marcar como concluída";
+      b.classList.toggle("feito", ok);
+    });
+    const total = aulas.length, qtd = aulas.filter(a => feitas.has(a.id)).length;
+    document.getElementById("barra").style.width = (qtd / total * 100) + "%";
+    document.getElementById("progressoTxt").textContent = qtd + " de " + total + " aulas concluídas";
+  }
+
+  // ---------- Rotas por #hash ----------
+  function mostrar(){
+    const id = location.hash.slice(1);
+    const alvo = aulas.find(a => a.id === id) || aulas[0];
+    aulas.forEach(a => a.classList.toggle("ativa", a === alvo));
+    menu.querySelectorAll("a[data-id]").forEach(l => l.classList.toggle("atual", l.dataset.id === alvo.id));
+    lateral.classList.remove("aberta"); abrir.setAttribute("aria-expanded","false"); abrir.textContent = "Ver todas as aulas";
+    setTimeout(function(){
+      if (window.innerWidth <= 860 && location.hash) alvo.scrollIntoView();
+      else window.scrollTo(0, 0);
+    }, 80);
+  }
+  window.addEventListener("hashchange", mostrar);
+
+  // ---------- Quizzes ----------
+  document.querySelectorAll(".quiz").forEach(function(q){
+    const perguntas = [...q.querySelectorAll(".pergunta")];
+    const placar = q.querySelector(".placar");
+    let acertos = 0, respondidas = 0;
+    perguntas.forEach(function(p){
+      const certa = Number(p.dataset.certa);
+      const ops = [...p.querySelectorAll(".op")];
+      const fb = document.createElement("div"); fb.className = "fb"; p.appendChild(fb);
+      ops.forEach(function(b, i){
+        b.type = "button";
+        b.addEventListener("click", function(){
+          if (p.dataset.feita) return;
+          p.dataset.feita = "1"; respondidas++;
+          ops[certa].classList.add("certa");
+          if (i === certa) { acertos++; fb.innerHTML = "<strong>Isso!</strong> " + p.dataset.explica; }
+          else { b.classList.add("errada"); fb.innerHTML = "<strong>Não foi dessa vez.</strong> " + p.dataset.explica; }
+          placar.textContent = "Você acertou " + acertos + " de " + respondidas + (respondidas === perguntas.length ? " perguntas. " + (acertos === perguntas.length ? "Gabaritou!" : "Revise as aulas das que errou.") : "");
+        });
+      });
+    });
+  });
+
+  atualizar();
+  mostrar();
+})();
+</script>
+</body>
+</html>

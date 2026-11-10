@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel | Sistema de Estoque</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- TELA 2: PAINEL (listagem) -->
+  <header class="topo">
+    <strong>Sistema de Estoque</strong>
+    <div>
+      Olá, <span id="nomeUsuario"></span> |
+      <a href="#" id="btnSair">Sair</a>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <h2>Produtos</h2>
+    <br>
+
+    <section class="resumo">
+      <div class="cartao"><span>Produtos cadastrados</span><strong id="totalProdutos">0</strong></div>
+      <div class="cartao"><span>Itens em estoque</span><strong id="totalItens">0</strong></div>
+      <div class="cartao"><span>Abaixo do mínimo</span><strong id="totalBaixo">0</strong></div>
+    </section>
+
+    <div class="barra-acoes">
+      <input type="search" id="busca" placeholder="Buscar produto pelo nome...">
+      <a href="produto.html" class="btn">+ Novo produto</a>
+    </div>
+
+    <div class="tabela-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Qtd.</th>
+            <th>Preço</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabela"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="js/dados.js"></script>
+  <script src="js/painel.js"></script>
+</body>
+</html>
